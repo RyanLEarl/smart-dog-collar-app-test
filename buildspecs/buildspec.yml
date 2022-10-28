@@ -14,7 +14,7 @@ phases:
   build:
     commands:
       # NPX used to keep version of serverless
-      - npx serverless deploy --stage ${CURRENT_STAGE} --region us-west-2
+      - npx serverless deploy --region us-west-2
   post_build:
     commands:
       # - npm run migrate-${CURRENT_STAGE}
