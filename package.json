@@ -12,12 +12,10 @@
     "extends": "react-app"
   },
   "devDependencies": {
-    "eslint": "^8.23.1"
+    "serverless-webpack": "^5.10.0",
+    "webpack-node-externals": "^3.0.0"
   },
-  "lint-staged": {
-    "**/src/**/*.js": [
-      "npm run lint",
-      "git add"
-    ]
+  "dependencies": {
+    "serverless-plugin-resource-tagging": "^1.2.0"
   }
 }

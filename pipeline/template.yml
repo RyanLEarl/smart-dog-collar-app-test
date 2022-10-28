@@ -4,7 +4,7 @@ Description: github-codepipeline
 Parameters:
   GitHubRepo:
     Type: String
-    Default: manager-search
+    Default: smart-dog-collar-app
   GitHubBranch:
     Type: String
     Default: dev
