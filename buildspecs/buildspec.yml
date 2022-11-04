@@ -5,7 +5,7 @@ phases:
       nodejs: latest
     commands:
       - n 16
-      - npm install -g serverless
+      # - npm install -g serverless
       - npm install
   # pre_build:
   #   commands:
@@ -14,7 +14,7 @@ phases:
   build:
     commands:
       # NPX used to keep version of serverless
-      - npx serverless deploy --region us-west-2
+      # - npx serverless deploy --region us-west-2
   post_build:
     commands:
       # - npm run migrate-${CURRENT_STAGE}
