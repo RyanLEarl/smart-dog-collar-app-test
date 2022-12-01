@@ -5,28 +5,14 @@ back-end/node_modules/
 back-end/.serverless
 back-end/.webpack
 back-end/.build
-front-end/node_modules/
 /.pnp
 .pnp.js
-inStoreAuth/node_modules/
-inStoreAuth/.serverless
-inStoreAuth/.webpack
-inStoreAuth/.build
 
 # testing
 /coverage
 
 # production
 /build
-
-# misc
-.DS_Store
-front-end/.env
-front-end/.env.local
-front-end/.env.dev.local
-front-end/.env.test.local
-front-end/.env.production.local
-front-end/.eslintcache
 
 npm-debug.log*
 yarn-debug.log*
