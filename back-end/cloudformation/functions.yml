@@ -1,36 +1,25 @@
 catchAllFallback:
   handler: src/functions/catchAllFallback.handler
-  package:
-    include:
-      - src/functions/catchAllFallback.js
   timeout: 100
+
 getCustomerContact:
   handler: src/functions/getCustomerContact.handler
-  package:
-    include:
-      - src/functions/getCustomerContact.js
   timeout: 60
+
 messageOwner:
   handler: src/functions/messageOwner.handler
-  package:
-    include:
-      - src/functions/messageOwner.js
   timeout: 60
+
 processCollarSmsQueue:
   handler: src/functions/processCollarSmsQueue.handler
-  package:
-    include:
-      - src/functions/processCollarSmsQueue.js
   timeout: 90
   events:
     - sqs:
         batchSize: 1
         arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarSmsQueue
+        
 processCollarQueue:
   handler: src/functions/processCollarQueue.handler
-  package:
-    include:
-      - src/functions/processCollarQueue.js
   timeout: 90
   events:
     - sqs:
