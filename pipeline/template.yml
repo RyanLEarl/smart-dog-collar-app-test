@@ -294,6 +294,7 @@ Resources:
               - lambda:GetFunction
               - lambda:ListVersionsByFunction
               - lambda:ListTags
+              - lambda:PublishVersion
               - lambda:TagResource
               - lambda:UntagResource
               - lambda:DeleteFunction
