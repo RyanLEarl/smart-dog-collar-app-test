@@ -37,6 +37,13 @@ provider:
       Resource:
         - !Sub arn:aws:secretsmanager:${self:provider.region}:${AWS::AccountId}:secret:${self:service}-*
 
+functions:
+  - ${file(cloudformation/functions.yml)}
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-resource-tagging
+
 package:
   individually: true
   exclude:

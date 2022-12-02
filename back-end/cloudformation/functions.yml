@@ -13,14 +13,14 @@ messageOwner:
 processCollarSmsQueue:
   handler: src/functions/processCollarSmsQueue.handler
   timeout: 90
-  events:
-    - sqs:
-        batchSize: 1
-        arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarSmsQueue
-        
+  # events:
+  #   - sqs:
+  #       batchSize: 1
+  #       arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarSmsQueue
+
 processCollarQueue:
   handler: src/functions/processCollarQueue.handler
   timeout: 90
-  events:
-    - sqs:
-        arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarQueue
+  # events:
+  #   - sqs:
+  #       arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarQueue
