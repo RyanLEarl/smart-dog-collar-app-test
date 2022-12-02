@@ -112,7 +112,7 @@ Resources:
     Properties:
       ArtifactStore:
         Type: S3
-        Location: rad-cicd
+        Location: codepipeline-us-west-2-337425671206
       RestartExecutionOnUpdate: true
       RoleArn: !GetAtt CodePipelineRole.Arn
       Stages:
@@ -182,6 +182,9 @@ Resources:
               - codepipeline:*
               - codebuild:*
               - s3:*
+              - s3:GetObject
+              - s3:List*
+              - s3:GetObjectVersion
               - sqs:*
               - apigateway:CreateApiKey
               - apigateway:CreateAuthorizer
