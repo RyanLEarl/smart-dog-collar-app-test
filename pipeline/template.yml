@@ -182,9 +182,6 @@ Resources:
               - codepipeline:*
               - codebuild:*
               - s3:*
-              - s3:GetObject
-              - s3:List*
-              - s3:GetObjectVersion
               - sqs:*
               - apigateway:CreateApiKey
               - apigateway:CreateAuthorizer
