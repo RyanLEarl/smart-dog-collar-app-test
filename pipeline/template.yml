@@ -4,10 +4,10 @@ Description: github-codepipeline
 Parameters:
   GitHubRepo:
     Type: String
-    Default: smart-dog-collar-app
+    Default: smart-dog-collar-app-test
   GitHubBranch:
     Type: String
-    Default: dev
+    Default: main
 
 Resources:
   CloudFormationTrustRole:
