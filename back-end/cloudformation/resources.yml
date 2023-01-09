@@ -2,12 +2,12 @@ Resources:
   collarQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: "smart-dog-collar-app-test-${self:provider.stage}-collarQueue"
+      QueueName: "smart-dog-collar-app-test-collarQueue"
       ReceiveMessageWaitTimeSeconds: 10
       VisibilityTimeout: 90
   collarLoggerQueueFIFO:
     Type: "AWS::SQS::Queue"
     Properties:
-      QueueName: "smart-dog-collar-app-test-${self:provider.stage}-collarLoggerQueue.fifo"
+      QueueName: "smart-dog-collar-app-test-collarLoggerQueue.fifo"
       FifoQueue: true
       ContentBasedDeduplication: true
