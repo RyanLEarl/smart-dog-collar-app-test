@@ -11,3 +11,7 @@ Resources:
       QueueName: "smart-dog-collar-app-test-collarLoggerQueue.fifo"
       FifoQueue: true
       ContentBasedDeduplication: true
+  dogCollarTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "smart-dog-collar-app-test-snsTopic"
