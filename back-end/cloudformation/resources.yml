@@ -1,11 +1,11 @@
 Resources:
-  IotQueue:
+  collarQueue:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: "smart-dog-collar-app-test-${self:provider.stage}-collarQueue"
       ReceiveMessageWaitTimeSeconds: 10
       VisibilityTimeout: 90
-  IotLoggerQueueFIFO:
+  collarLoggerQueueFIFO:
     Type: "AWS::SQS::Queue"
     Properties:
       QueueName: "smart-dog-collar-app-test-${self:provider.stage}-collarLoggerQueue.fifo"
