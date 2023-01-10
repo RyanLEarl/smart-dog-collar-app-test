@@ -29,8 +29,11 @@ provider:
   iamRoleStatements:
     - Effect: "Allow"
       Action:
+        - "sns:Publish"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
         - "lambda:InvokeFunction"
-        - "SNS:Publish"
       Resource: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-*
     - Effect: "Allow"
       Action:
