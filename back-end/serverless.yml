@@ -30,6 +30,7 @@ provider:
     - Effect: "Allow"
       Action:
         - "lambda:InvokeFunction"
+        - "SNS:Publish"
       Resource: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-*
     - Effect: "Allow"
       Action:

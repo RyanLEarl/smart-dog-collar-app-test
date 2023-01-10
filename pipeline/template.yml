@@ -336,6 +336,7 @@ Resources:
               - sns:DeleteTopic
               - sns:ListSubscriptionsByTopic
               - sns:ListTopics
+              - sns:Publish
               - sns:SetSubscriptionAttributes
               - sqs:CreateQueue
               - sqs:SetQueueAttributes

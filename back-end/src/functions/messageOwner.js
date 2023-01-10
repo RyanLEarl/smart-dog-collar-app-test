@@ -9,12 +9,14 @@ exports.handler = async (event, context) => {
   const { respEvent, log, skipStep } = await initWoprStep(event, context)
   if(skipStep){ return respEvent}
 
-  const featureFlag = await getParams(`${process.env.stage}/featureFlag`) || {};
+  // const featureFlag = await getParams(`${process.env.stage}/featureFlag`) || {};
 
   let message = '';
-
+  console.log('Data: ', JSON.stringify(event.Payload));
+  let { Time, Severity, dogName } = event.Payload;
+  phones = '5038698875';
   const personalNumber = '5038698875';
-  if (Movement == 'Negative') {
+  if (Severity >= 0.5) {
     message = `Testing${personalNumber}`;
 
   const phoneList = (phones || '').split(',');
