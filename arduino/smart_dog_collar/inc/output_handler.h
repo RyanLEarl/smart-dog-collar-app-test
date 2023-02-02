@@ -1,7 +1,7 @@
 #ifndef OUTPUT_HANDLER_H
 #define OUTPUT_HANDLER_H
 
-#include <ArduinoBLE.h>
+#include <ArduinoBLE.h> // Used for Serial debugging
 
 #define LABEL_COUNT 7
 #define SEIZURE 4

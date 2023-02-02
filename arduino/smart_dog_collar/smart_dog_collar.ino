@@ -1,6 +1,6 @@
 #include <ArduinoBLE.h>
 #include <Arduino_LSM9DS1.h> // Rev 1
-#include <Arduino_BMI270_BMM150.h> // Rev 2
+// #include <Arduino_BMI270_BMM150.h> // Rev 2
 #include <TensorFlowLite.h>
 
 #include <cmath>
