@@ -1,6 +1,6 @@
 #include <ArduinoBLE.h>
 #include <Arduino_LSM9DS1.h> // Rev 1
-// #include <Arduino_BMI270_BMM150.h> // Rev 2
+#include <Arduino_BMI270_BMM150.h> // Rev 2
 #include <TensorFlowLite.h>
 
 #include <cmath>
@@ -36,7 +36,7 @@ namespace
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation.
-  constexpr int kTensorArenaSize = 60 * 1024;
+  constexpr int kTensorArenaSize = 90 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
 
   tflite::ErrorReporter *error_reporter = nullptr;
@@ -116,6 +116,8 @@ void setup() {
 
   // TODO 3 Random testing for input size
   int input_length = model_input->bytes / sizeof(float);
+  Serial.print("Input length");
+  Serial.print(input_length);
 
   // TODO 2: Check if setup correctly
   // Obtain pointer to model's output and check model output parameters
@@ -150,12 +152,12 @@ void loop() {
   //   model_input->data.f[i + 3] = feature_buffer[i + 3];
   // }
 
-  TfLiteStatus invoke_status = interpreter->Invoke();
-  if (invoke_status != kTfLiteOk) 
-  {
-    error_reporter->Report("Invoke failed");
-    return;
-  }
+  // TfLiteStatus invoke_status = interpreter->Invoke();
+  // if (invoke_status != kTfLiteOk) 
+  // {
+  //   error_reporter->Report("Invoke failed");
+  //   return;
+  // }
 
   // Read the results of the ml model
   int8_t max_score = 0;
