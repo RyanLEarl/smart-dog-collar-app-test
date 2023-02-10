@@ -6,6 +6,10 @@ getCustomerContact:
   handler: src/functions/getCustomerContact.handler
   timeout: 60
 
+test:
+  handler: src/functions/test.handler
+  timeout: 60
+
 messageOwner:
   handler: src/functions/messageOwner.handler
   timeout: 60
