@@ -1,5 +1,5 @@
 #include <ArduinoBLE.h>
-#include <Arduino_LSM9DS1.h> // Rev 1
+// #include <Arduino_LSM9DS1.h> // Rev 1
 #include <Arduino_BMI270_BMM150.h> // Rev 2
 #include <TensorFlowLite.h>
 
@@ -14,6 +14,15 @@
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
+
+#define DATA_LENGTH 400
+#define ACCELERATION_COUNT 3
+#define ACCELERATION_DATA_LENGTH (DATA_LENGTH * 3)
+#define GYROSCOPE_COUNT 3
+#define GYROSCOPE_DATA_LENGTH (DATA_LENGTH * 3)
+#define INPUT_COUNT 6
+#define TARGET_HZ 17 // Take 17 samples per second
+#define NORMALIZATION 1000
 
 #define SMART_DOG_COLLAR_DEBUG
 // #undef SMART_DOG_COLLAR_DEBUG
@@ -46,11 +55,6 @@ namespace
   TfLiteTensor *model_output = nullptr;
   Sensors sensor;
   Output_Handler output_handler;
-
-  // TODO 3: Idk if these are needed
-  // int feature_buffer[6] = {0, 0, 0, 0, 0, 0};
-  // float current_acceleration[3] = { 0.0f, 0.0f, 0.0f };
-  // float current_rotation[3] = { 0.0f, 0.0f, 0.0f };
 }
 
 void setup() {
@@ -97,7 +101,8 @@ void setup() {
                                                      error_reporter);
   interpreter = &static_interpreter;
 
-  // Allocate memory from the tensor_arena for the model's tensors
+  // Runs through the model and allocates all necessary input, output and
+  // intermediate tensors.
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
   if(allocate_status != kTfLiteOk)
   {
@@ -108,25 +113,24 @@ void setup() {
   // TODO 2: Check if setup correctly
   // Obtain pointer to model's input and check model input parameters
   model_input = interpreter->input(0);
-  if ((model_input->dims->size != input_count) || (model_input->dims->data[0] != 1)) 
-  {
-    error_reporter->Report("Bad input tensor parameters in model");
-    return;
-  }
+  // if ((model_input->dims->size != input_count) || (model_input->dims->data[0] != 1)) 
+  // {
+  //   error_reporter->Report("Bad input tensor parameters in model");
+  //   return;
+  // }
 
   // TODO 3 Random testing for input size
   int input_length = model_input->bytes / sizeof(float);
-  Serial.print("Input length");
-  Serial.print(input_length);
+  error_reporter->Report("Input length: %d", input_length);
 
   // TODO 2: Check if setup correctly
   // Obtain pointer to model's output and check model output parameters
   model_output = interpreter->output(0);
-  if ((model_output->dims->size != label_count) || (model_output->dims->data[0] != 1) || (model_output->dims->data[1] != label_count)) 
-  {
-    error_reporter->Report("Bad output tensor parameters in model");
-    return;
-  }
+  // if ((model_output->dims->size != label_count) || (model_output->dims->data[0] != 1) || (model_output->dims->data[1] != label_count)) 
+  // {
+  //   error_reporter->Report("Bad output tensor parameters in model");
+  //   return;
+  // }
 }
 
 void loop() {
@@ -139,29 +143,18 @@ void loop() {
 
   // Read data from sensors
   sensor.readAccelerometerAndGyroscope(error_reporter, model_input->data.f);
-  // Update feature buffer?
 
-  // // Give gyroscope data to model
-  // for (int i = 0; i < 3; i++) 
-  // {
-  //   model_input->data.f[i] = feature_buffer[i];
-  // }
-  // //Give accelerometer data to model
-  // for (int i = 0; i < 3; i++) 
-  // {
-  //   model_input->data.f[i + 3] = feature_buffer[i + 3];
-  // }
-
-  // TfLiteStatus invoke_status = interpreter->Invoke();
-  // if (invoke_status != kTfLiteOk) 
-  // {
-  //   error_reporter->Report("Invoke failed");
-  //   return;
-  // }
+  // Invokes the interpreter
+  TfLiteStatus invoke_status = interpreter->Invoke();
+  if (invoke_status != kTfLiteOk) 
+  {
+    error_reporter->Report("Invoke failed");
+    return;
+  }
 
   // Read the results of the ml model
   int8_t max_score = 0;
-  int max_index;
+  int max_index = 0;
   for (int i = 0; i < label_count; i++) 
   {
     const int8_t score = model_output->data.f[i];
@@ -173,21 +166,5 @@ void loop() {
   }
 
   // Handle the results of the ml model
-  output_handler.handleOutput(max_index);
-
-  #ifdef SMART_DOG_COLLAR_DEBUG
-  // Check what for the iteration of the model that just occured
-  // Serial.println("Data from loop()");
-  // Serial.print(feature_buffer[0]);
-  // Serial.print('\t');
-  // Serial.print(feature_buffer[1]);
-  // Serial.print('\t');
-  // Serial.print(feature_buffer[2]);
-  // Serial.print('\t');
-  // Serial.print(feature_buffer[3]);
-  // Serial.print('\t');
-  // Serial.print(feature_buffer[4]);
-  // Serial.print('\t');
-  // Serial.println(feature_buffer[5]);
-  #endif
+  output_handler.handleOutput(error_reporter, max_index);
 }

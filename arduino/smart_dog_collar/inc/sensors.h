@@ -1,19 +1,22 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-#include <ArduinoBLE.h>
-#include <Arduino_LSM9DS1.h> // Rev 1
+// #include <Arduino_LSM9DS1.h> // Rev 1
 #include <Arduino_BMI270_BMM150.h> // Rev 2
 
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 
-#define DATA_LENGTH 600
+#define DATA_LENGTH 400
 #define ACCELERATION_COUNT 3
 #define ACCELERATION_DATA_LENGTH (DATA_LENGTH * 3)
 #define GYROSCOPE_COUNT 3
 #define GYROSCOPE_DATA_LENGTH (DATA_LENGTH * 3)
 #define INPUT_COUNT 6
 #define TARGET_HZ 17 // Take 17 samples per second
+#define NORMALIZATION 1000
+#define ACCELERATION_X_NORM -100
+#define ACCELERATION_Y_NORM -450
+#define ACCELERATION_Z_NORM -8170
 
 class Sensors{
 /*************/

@@ -1,7 +1,7 @@
 #ifndef OUTPUT_HANDLER_H
 #define OUTPUT_HANDLER_H
 
-#include <ArduinoBLE.h> // Used for Serial debugging
+#include "tensorflow/lite/micro/micro_error_reporter.h"
 
 #define LABEL_COUNT 7
 #define SEIZURE 4
@@ -17,7 +17,7 @@ private:
 /* Methods */
 /***********/
 public:
-    void handleOutput(int);
+    void handleOutput(tflite::ErrorReporter*, int);
 };
 
 #endif
