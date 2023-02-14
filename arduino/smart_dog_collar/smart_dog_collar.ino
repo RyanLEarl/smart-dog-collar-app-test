@@ -45,7 +45,7 @@ namespace
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation.
-  constexpr int kTensorArenaSize = 90 * 1024;
+  constexpr int kTensorArenaSize = 60 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
 
   tflite::ErrorReporter *error_reporter = nullptr;
@@ -55,6 +55,7 @@ namespace
   TfLiteTensor *model_output = nullptr;
   Sensors sensor;
   Output_Handler output_handler;
+  float input[6]; // Gyroscope x, y, z followed by accelerometer x, y, z
 }
 
 void setup() {
@@ -142,7 +143,15 @@ void loop() {
   }
 
   // Read data from sensors
-  sensor.readAccelerometerAndGyroscope(error_reporter, model_input->data.f);
+  sensor.readAccelerometerAndGyroscope(error_reporter, input);
+
+  for(int i = 0; i < 6; i++)
+  {
+    model_input->data.f[i] = input[i];
+    // Serial.println(input[i]);
+    // error_reporter->Report("Input data %d: %d", i, input[i]);
+    // error_reporter->Report("Model input data %d: %d", i, model_input->data.f[i]);
+  }
 
   // Invokes the interpreter
   TfLiteStatus invoke_status = interpreter->Invoke();
@@ -157,7 +166,8 @@ void loop() {
   int max_index = 0;
   for (int i = 0; i < label_count; i++) 
   {
-    const int8_t score = model_output->data.f[i];
+    const float score = model_output->data.f[i];
+    // error_reporter->Report("Score of %d: %f", i, score);
     if ((i == 0) || (score > max_score)) 
     {
       max_score = score;
@@ -166,5 +176,5 @@ void loop() {
   }
 
   // Handle the results of the ml model
-  output_handler.handleOutput(error_reporter, max_index);
+  output_handler.handleOutput(error_reporter, max_index, input);
 }
