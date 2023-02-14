@@ -47,7 +47,8 @@ void Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporte
     int error_status = 0;
 
     // Try to get data from the gyroscope
-    if(IMU.gyroscopeAvailable()){
+    if(IMU.gyroscopeAvailable())
+    {
         // Read data if it is time to read gyroscope
         if(true)
         // if(gyroscope_skip_counter >= gyroscope_sample_every_n)

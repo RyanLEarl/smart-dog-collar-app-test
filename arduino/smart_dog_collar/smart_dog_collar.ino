@@ -54,13 +54,15 @@ namespace
   TfLiteTensor *model_input = nullptr;
   TfLiteTensor *model_output = nullptr;
   Sensors sensor;
-  Output_Handler output_handler;
+  OutputHandler output_handler;
   float input[6]; // Gyroscope x, y, z followed by accelerometer x, y, z
 }
 
-void setup() {
+void setup() 
+{
   // Setup Serial
   tflite::InitializeTarget();
+  Serial.begin(9600);
 
   // Setup logging
   static tflite::MicroErrorReporter micro_error_reporter;
@@ -69,7 +71,7 @@ void setup() {
 
   // Setup structs
   sensor = Sensors();
-  output_handler = Output_Handler();
+  output_handler = OutputHandler();
 
   // Try to start up the IMU
   bool sensor_status = sensor.setupIMU(error_reporter);
@@ -134,7 +136,8 @@ void setup() {
   // }
 }
 
-void loop() {
+void loop() 
+{
   // Check if data is avaliable
   const bool data_available = IMU.accelerationAvailable() || IMU.gyroscopeAvailable();
   if (!data_available) 
