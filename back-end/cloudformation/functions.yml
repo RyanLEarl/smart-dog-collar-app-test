@@ -6,8 +6,8 @@ getCustomerContact:
   handler: src/functions/getCustomerContact.handler
   timeout: 60
 
-test:
-  handler: src/functions/test.handler
+processArduinoData:
+  handler: src/functions/processArduinoData.handler
   timeout: 60
 
 messageOwner:
