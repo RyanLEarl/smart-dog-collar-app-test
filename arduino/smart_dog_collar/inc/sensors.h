@@ -12,7 +12,7 @@
 #include <Arduino_LSM6DS3.h> // IoT
 #endif
 
-#define DATA_LENGTH 200
+#define DATA_LENGTH 300
 #define ACCELERATION_COUNT 3
 #define ACCELERATION_DATA_LENGTH (DATA_LENGTH * 3)
 #define GYROSCOPE_COUNT 3

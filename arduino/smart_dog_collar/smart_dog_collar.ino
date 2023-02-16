@@ -2,6 +2,10 @@
 // #undef SMART_DOG_COLLAR_DEBUG
 #define BLE_SENSE_BOARD
 #undef BLE_SENSE_BOARD
+#ifdef BLE_SENSE_BOARD
+#define BLE_SENSE_NO_WIFI
+// #undef BLE_SENSE_NO_WIFI
+#endif
 
 #include "./inc/sensors.h"
 // #include "./inc/output_handler_temp.h"
@@ -16,14 +20,17 @@
 #include "./inc/smart_dog_collar_model_data.h"
 // #include <Arduino_LSM9DS1.h> // Rev 1
 #include <Arduino_BMI270_BMM150.h> // Rev 2
+#ifndef BLE_SENSE_NO_WIFI
+#include <WiFiNINA.h>
+#endif
 #else
 #include <Arduino_LSM6DS3.h> // IoT
+#include <WiFiNINA.h>
 #endif
 
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
-#include <WiFiNINA.h>
 #include "./inc/arduino_secrets.h"
 
 #define SENSOR_COUNT 6
@@ -40,14 +47,17 @@ const char pass[]        = SECRET_PASS;
 const char broker[]      = SECRET_BROKER;
 const char* certificate  = SECRET_CERTIFICATE;
 
+#ifndef BLE_SENSE_NO_WIFI
 WiFiClient    wifiClient;            // Used for the TCP socket connection
 BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates with ECC508
 MqttClient    mqttClient(sslClient);
+#endif
+
+// Strings for outputting data to AWS
 String stringXGyro, stringYGyro, stringZGyro, 
        stringXAccel, stringYAccel, stringZAccel, 
        stringOne, stringTwo, stringThree, stringFour, 
        stringFive, stringSix, stringSeven, stringOutput;
-
 
 namespace 
 {
@@ -67,7 +77,7 @@ namespace
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation.
   #ifdef BLE_SENSE_BOARD
-  constexpr int kTensorArenaSize = 60 * 1024;
+  constexpr int kTensorArenaSize = 90 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
   tflite::ErrorReporter *error_reporter = nullptr;
   const tflite::Model *model = nullptr;
@@ -92,9 +102,9 @@ void handleOutput(int, float*);
 #endif
 void publishMessage();
 void connectWiFi();
+unsigned long getTime();
 void connectMQTT();
 void onMessageReceived(int);
-unsigned long getTime();
 
 void setup() 
 {
@@ -113,7 +123,9 @@ void setup()
   // Setup structs
   sensor = Sensors();
   // output_handler = OutputHandler();
+  #ifndef BLE_SENSE_BOARD
   setupOutputHandler();
+  #endif
 
   #ifdef BLE_SENSE_BOARD
   // Try to start up the IMU
@@ -240,6 +252,7 @@ void loop()
   #endif
 }
 
+#ifndef BLE_SENSE_BOARD
 void setupOutputHandler()
 {
     while (!Serial);
@@ -284,8 +297,30 @@ void setupOutputHandler()
     // called when the MQTTClient receives a message
     mqttClient.onMessage(onMessageReceived);
 }
+#endif
 
-#ifdef BLE_SENSE_BOARD
+#ifdef BLE_SENSE_BOARD 
+#ifdef BLE_SENSE_NO_WIFI
+void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *sensor_data)
+{ 
+    // Handle seizure
+    if(activity == SEIZURE)
+    {
+        // Send push notification
+    }
+
+    #ifdef SMART_DOG_COLLAR_DEBUG
+    // Check what the sensors were
+    for(int i = 0; i < SENSOR_COUNT; i++)
+    {
+        Serial.println(sensor_data[i]);
+    }
+
+    // Check what was the result of the model
+    error_reporter->Report(labels[activity]);
+    #endif
+}
+#else
 void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *sensor_data)
 { 
     // Connect to wifi if not yet connected
@@ -339,6 +374,7 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     error_reporter->Report(labels[activity]);
     #endif
 }
+#endif
 #else
 void handleOutput(int activity, float *sensor_data)
 // void handleOutput(int activity, float *sensor_data)
@@ -394,7 +430,6 @@ void handleOutput(int activity, float *sensor_data)
     Serial.println(labels[activity]);
     #endif
 }
-#endif
 
 void publishMessage() 
 {
@@ -411,7 +446,9 @@ void publishMessage()
     mqttClient.print(stringOutput);
     mqttClient.endMessage();
 }
+#endif
 
+#ifndef BLE_SENSE_BOARD
 void connectWiFi() 
 {
     Serial.print("Attempting to connect to SSID: ");
@@ -428,6 +465,12 @@ void connectWiFi()
 
     Serial.println("You're connected to the network");
     Serial.println();
+}
+
+unsigned long getTime() 
+{
+    // get the current time from the WiFi module  
+    return WiFi.getTime();
 }
 
 void connectMQTT() 
@@ -469,9 +512,4 @@ void onMessageReceived(int messageSize)
 
     Serial.println();
 }
-
-unsigned long getTime() 
-{
-    // get the current time from the WiFi module  
-    return WiFi.getTime();
-}
+#endif
