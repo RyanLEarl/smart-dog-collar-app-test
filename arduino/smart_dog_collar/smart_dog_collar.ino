@@ -1,36 +1,53 @@
-#include <ArduinoBLE.h>
-// #include <Arduino_LSM9DS1.h> // Rev 1
-#include <Arduino_BMI270_BMM150.h> // Rev 2
-#include <TensorFlowLite.h>
+#define SMART_DOG_COLLAR_DEBUG
+// #undef SMART_DOG_COLLAR_DEBUG
+#define BLE_SENSE_BOARD
+#undef BLE_SENSE_BOARD
 
-#include <cmath>
-
-#include "./inc/smart_dog_collar_model_data.h"
 #include "./inc/sensors.h"
-#include "./inc/output_handler.h"
+// #include "./inc/output_handler_temp.h"
 
+#ifdef BLE_SENSE_BOARD
+#include <TensorFlowLite.h>
 #include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
+#include "./inc/smart_dog_collar_model_data.h"
+// #include <Arduino_LSM9DS1.h> // Rev 1
+#include <Arduino_BMI270_BMM150.h> // Rev 2
+#else
+#include <Arduino_LSM6DS3.h> // IoT
+#endif
 
-#define DATA_LENGTH 400
-#define ACCELERATION_COUNT 3
-#define ACCELERATION_DATA_LENGTH (DATA_LENGTH * 3)
-#define GYROSCOPE_COUNT 3
-#define GYROSCOPE_DATA_LENGTH (DATA_LENGTH * 3)
-#define INPUT_COUNT 6
-#define TARGET_HZ 17 // Take 17 samples per second
-#define NORMALIZATION 1000
+#include <ArduinoBearSSL.h>
+#include <ArduinoECCX08.h>
+#include <ArduinoMqttClient.h>
+#include <WiFiNINA.h>
+#include "./inc/arduino_secrets.h"
 
-#define SMART_DOG_COLLAR_DEBUG
-// #undef SMART_DOG_COLLAR_DEBUG
+#define SENSOR_COUNT 6
+#define LABEL_COUNT 7
+#define SEIZURE 4
 // TODO LIST
 // 1: Double check data FIFO
 // 2: tensor input/output checks
 // 3: Figure out if the current ml model input is correct
 // 4: output handler (AWS stuff)
+
+const char ssid[]        = SECRET_SSID;
+const char pass[]        = SECRET_PASS;
+const char broker[]      = SECRET_BROKER;
+const char* certificate  = SECRET_CERTIFICATE;
+
+WiFiClient    wifiClient;            // Used for the TCP socket connection
+BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates with ECC508
+MqttClient    mqttClient(sslClient);
+String stringXGyro, stringYGyro, stringZGyro, 
+       stringXAccel, stringYAccel, stringZAccel, 
+       stringOne, stringTwo, stringThree, stringFour, 
+       stringFive, stringSix, stringSeven, stringOutput;
+
 
 namespace 
 {
@@ -42,37 +59,63 @@ namespace
   constexpr int input_count = 6;
   constexpr int label_count = 7;
 
+  Sensors sensor;
+  // OutputHandler output_handler;
+  float input[6]; // Gyroscope x, y, z followed by accelerometer x, y, z
+
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation.
+  #ifdef BLE_SENSE_BOARD
   constexpr int kTensorArenaSize = 60 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
-
   tflite::ErrorReporter *error_reporter = nullptr;
   const tflite::Model *model = nullptr;
   tflite::MicroInterpreter *interpreter = nullptr;
   TfLiteTensor *model_input = nullptr;
   TfLiteTensor *model_output = nullptr;
-  Sensors sensor;
-  OutputHandler output_handler;
-  float input[6]; // Gyroscope x, y, z followed by accelerometer x, y, z
+  #endif
+
+  const char *labels[LABEL_COUNT] = { "car", "leisure", "play", "run_jog",
+                                      "seizure", "sleep", "walk" };
+  int orientations[3];
+
+  int gyroscopeOrientation;
+  int sensorSensitivity = 100;
 }
+
+void setupOutputHandler();
+#ifdef BLE_SENSE_BOARD
+void handleOutput(tflite::ErrorReporter*, int, float*);
+#else
+void handleOutput(int, float*);
+#endif
+void publishMessage();
+void connectWiFi();
+void connectMQTT();
+void onMessageReceived(int);
+unsigned long getTime();
 
 void setup() 
 {
+  #ifdef BLE_SENSE_BOARD
   // Setup Serial
   tflite::InitializeTarget();
-  Serial.begin(9600);
 
   // Setup logging
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
   error_reporter->Report("Started");
+  #else
+  Serial.begin(9600);
+  #endif
 
   // Setup structs
   sensor = Sensors();
-  output_handler = OutputHandler();
+  // output_handler = OutputHandler();
+  setupOutputHandler();
 
+  #ifdef BLE_SENSE_BOARD
   // Try to start up the IMU
   bool sensor_status = sensor.setupIMU(error_reporter);
   if(!sensor_status)
@@ -134,6 +177,14 @@ void setup()
   //   error_reporter->Report("Bad output tensor parameters in model");
   //   return;
   // }
+  #else // iot board
+  bool sensor_status = sensor.setupIMU();
+  if(!sensor_status)
+  {
+    Serial.println("Sensor failed to start");
+    return;
+  }
+  #endif
 }
 
 void loop() 
@@ -146,6 +197,7 @@ void loop()
   }
 
   // Read data from sensors
+  #ifdef BLE_SENSE_BOARD
   sensor.readAccelerometerAndGyroscope(error_reporter, input);
 
   for(int i = 0; i < 6; i++)
@@ -179,5 +231,247 @@ void loop()
   }
 
   // Handle the results of the ml model
-  output_handler.handleOutput(error_reporter, max_index, input);
+  // output_handler.handleOutput(error_reporter, max_index, input);
+  handleOutput(error_reporter, max_index, input);
+  #else // iot board
+  int max_index = 0;
+  sensor.readAccelerometerAndGyroscope(input);
+  handleOutput(max_index, input);
+  #endif
+}
+
+void setupOutputHandler()
+{
+    while (!Serial);
+    stringXGyro = String("{\"body\":{\"xRotationalAxis\":\"");
+    stringYGyro = String("\", \"yRotationalAxis\":\""); 
+    stringZGyro = String("\", \"zRotationalAxis\":\""); 
+    stringXAccel = String("{\"body\":{\"xAcceleration\":\"");
+    stringYAccel = String("\", \"yAcceleration\":\""); 
+    stringZAccel = String("\", \"zAcceleration\":\""); 
+    stringOne = String();
+    stringTwo = String();
+    stringThree = String();
+    stringFour = String();
+    stringFive = String();
+    stringSix = String();
+    stringSeven = String("\"}}");
+    stringOutput = String();
+    
+    // Check is ECCX08 is ready
+    if (!ECCX08.begin()) 
+    {
+        Serial.println("No ECCX08 present!");
+        while (1);
+    }
+
+    // Set a callback to get the current time
+    // used to validate the servers certificate
+    ArduinoBearSSL.onGetTime(getTime);
+
+    // Set the ECCX08 slot to use for the private key
+    // and the accompanying public certificate for it
+    sslClient.setEccSlot(0, certificate);
+
+    // Optional, set the client id used for MQTT,
+    // each device that is connected to the broker
+    // must have a unique client id. The MQTTClient will generate
+    // a client id for you based on the millis() value if not set
+    //
+    mqttClient.setId("iotconsole-8bfa76b7-02fb-4391-b5bb-46cc4a524e23");
+
+    // Set the message callback, this function is
+    // called when the MQTTClient receives a message
+    mqttClient.onMessage(onMessageReceived);
+}
+
+#ifdef BLE_SENSE_BOARD
+void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *sensor_data)
+{ 
+    // Connect to wifi if not yet connected
+    if (WiFi.status() != WL_CONNECTED) 
+    {
+        connectWiFi();
+    }
+
+    // Make sure MQTT is connected to
+    if (!mqttClient.connected()) 
+    {
+        // MQTT client is disconnected, connect
+        connectMQTT();
+    }
+
+    // poll for new MQTT messages and send keep alive
+    mqttClient.poll();
+
+    // Handle seizure
+    if(activity == SEIZURE)
+    {
+        // Send push notification
+    }
+
+    #ifdef SMART_DOG_COLLAR_AWS_DEBUG
+    float gyroX = sensor_data[0];
+    if(false)
+    // if (gyroX > gyroscopeOrientation + sensorSensitivity || gyroX < gyroscopeOrientation - sensorSensitivity) 
+    {
+        gyroscopeOrientation = sensor_data[0];
+        stringOne = stringXGyro + sensor_data[0];
+        stringTwo = stringYGyro + sensor_data[1];
+        stringThree = stringZGyro + sensor_data[2];
+        stringFour = stringXAccel + sensor_data[3];
+        stringFive = stringYAccel + sensor_data[4];
+        stringSix = stringZAccel + sensor_data[5];
+        stringOutput = stringOne + stringTwo + stringThree + stringFour + stringFive + stringSix + stringSeven;
+        Serial.println(gyroscopeOrientation);
+        publishMessage();
+    }
+    #endif
+
+    #ifdef SMART_DOG_COLLAR_DEBUG
+    // Check what the sensors were
+    for(int i = 0; i < SENSOR_COUNT; i++)
+    {
+        Serial.println(sensor_data[i]);
+    }
+
+    // Check what was the result of the model
+    error_reporter->Report(labels[activity]);
+    #endif
+}
+#else
+void handleOutput(int activity, float *sensor_data)
+// void handleOutput(int activity, float *sensor_data)
+{ 
+    // Connect to wifi if not yet connected
+    if (WiFi.status() != WL_CONNECTED) 
+    {
+        connectWiFi();
+    }
+
+    // Make sure MQTT is connected to
+    if (!mqttClient.connected()) 
+    {
+        // MQTT client is disconnected, connect
+        connectMQTT();
+    }
+
+    // poll for new MQTT messages and send keep alive
+    mqttClient.poll();
+
+    // Handle seizure
+    if(activity == SEIZURE)
+    {
+        // Send push notification
+    }
+
+    #ifdef SMART_DOG_COLLAR_AWS_DEBUG
+    float gyroX = sensor_data[0];
+    if(false)
+    // if (gyroX > gyroscopeOrientation + sensorSensitivity || gyroX < gyroscopeOrientation - sensorSensitivity) 
+    {
+        gyroscopeOrientation = sensor_data[0];
+        stringOne = stringXGyro + sensor_data[0];
+        stringTwo = stringYGyro + sensor_data[1];
+        stringThree = stringZGyro + sensor_data[2];
+        stringFour = stringXAccel + sensor_data[3];
+        stringFive = stringYAccel + sensor_data[4];
+        stringSix = stringZAccel + sensor_data[5];
+        stringOutput = stringOne + stringTwo + stringThree + stringFour + stringFive + stringSix + stringSeven;
+        Serial.println(gyroscopeOrientation);
+        publishMessage();
+    }
+    #endif
+
+    #ifdef SMART_DOG_COLLAR_DEBUG
+    // Check what the sensors were
+    for(int i = 0; i < SENSOR_COUNT; i++)
+    {
+        Serial.println(sensor_data[i]);
+    }
+
+    // Check what was the result of the model
+    Serial.println(labels[activity]);
+    #endif
+}
+#endif
+
+void publishMessage() 
+{
+    // char json4[] = 
+    // char json3[] = std::string("\", \"z-rotational-axis\":\"") + z + "\"}}";
+    // char json2[] = std::string("\", \"y-rotational-axis\":\"") + y + 
+    // char json[] = std::string("{\"body\":{\"x-rotational-axis\":\"") + gyroscopeOrientation + "\", \"y-rotational-axis\":\"" + y + "\", \"z-rotational-axis\":\"" + z + "\"}}";
+    // Serial.println(json);
+    // Serial.println("Publishing message");
+
+    // send message, the Print interface can be used to set the message contents
+    mqttClient.beginMessage("smart-dog-collar");
+    // mqttClient.print("I have been moved: ");
+    mqttClient.print(stringOutput);
+    mqttClient.endMessage();
+}
+
+void connectWiFi() 
+{
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.print(ssid);
+    Serial.print(" ");
+
+    while (WiFi.begin(ssid, pass) != WL_CONNECTED) 
+    {
+        // failed, retry
+        Serial.print(".");
+        delay(5000);
+    }
+    Serial.println();
+
+    Serial.println("You're connected to the network");
+    Serial.println();
+}
+
+void connectMQTT() 
+{
+    Serial.print("Attempting to MQTT broker: ");
+    Serial.print(broker);
+    Serial.println(" ");
+
+    while (!mqttClient.connect(broker, 8883)) 
+    {
+        // failed, retry
+        Serial.print(".");
+        delay(5000);
+    }
+    Serial.println();
+
+    Serial.println("You're connected to the MQTT broker");
+    Serial.println();
+
+    // subscribe to a topic
+    mqttClient.subscribe("$aws/things/Ryan-smart-dog-collar-nano-33-iot/shadow/update");
+}
+
+void onMessageReceived(int messageSize) 
+{
+    // we received a message, print out the topic and contents
+    Serial.print("Received a message with topic '");
+    // Serial.print(mqttClient.messageTopic());
+    Serial.print("', length ");
+    Serial.print(messageSize);
+    Serial.println(" bytes:");
+
+    // use the Stream interface to print the contents
+    while (mqttClient.available()) 
+    {
+        Serial.print((char)mqttClient.read());
+    }
+    Serial.println();
+
+    Serial.println();
+}
+
+unsigned long getTime() 
+{
+    // get the current time from the WiFi module  
+    return WiFi.getTime();
 }
