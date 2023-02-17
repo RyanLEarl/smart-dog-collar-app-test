@@ -2,7 +2,7 @@ The following files contain #define BLE_SENSE_BOARD" and "#undef BLE_SENSE_BOARD
 smart_dog_collar.ino
 sensors.cpp
 sensors.h
-When working with the Arduino IoT, make sure to comment out the "#undef BLE_SENSE_BOARD" for every single file listed above
+When working with the Arduino IoT, make sure to uncomment out the "#undef BLE_SENSE_BOARD" for every single file listed above
 
 
 If you are using the ble sense arduino and don't have wifi, uncomment "// #undef BLE_SENSE_NO_WIFI" in smart_dog_collar.ino
