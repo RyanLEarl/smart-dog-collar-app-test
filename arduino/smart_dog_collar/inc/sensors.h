@@ -1,7 +1,7 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 #define BLE_SENSE_BOARD
-#undef BLE_SENSE_BOARD
+// #undef BLE_SENSE_BOARD
 
 #ifdef BLE_SENSE_BOARD
 #include <TensorFlowLite.h>

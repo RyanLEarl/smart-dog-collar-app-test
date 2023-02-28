@@ -1,7 +1,7 @@
 #define SMART_DOG_COLLAR_DEBUG
 // #undef SMART_DOG_COLLAR_DEBUG
 #define BLE_SENSE_BOARD
-#undef BLE_SENSE_BOARD
+// #undef BLE_SENSE_BOARD
 #ifdef BLE_SENSE_BOARD
 #define BLE_SENSE_NO_WIFI
 // #undef BLE_SENSE_NO_WIFI
@@ -71,13 +71,13 @@ namespace
 
   Sensors sensor;
   // OutputHandler output_handler;
-  float input[6]; // Gyroscope x, y, z followed by accelerometer x, y, z
+  float input[6] = {0, 0, 0, 0, 0, 0}; // Gyroscope x, y, z followed by accelerometer x, y, z
 
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation.
   #ifdef BLE_SENSE_BOARD
-  constexpr int kTensorArenaSize = 90 * 1024;
+  constexpr int kTensorArenaSize = 45 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
   tflite::ErrorReporter *error_reporter = nullptr;
   const tflite::Model *model = nullptr;
@@ -149,6 +149,8 @@ void setup()
   }
 
   // Pulls in all the operation implementations we need
+  // Can use a static tflite::MicroMutableOpResolver<x> resolver; if low on memory
+  // so we only include the operations we need
   static tflite::AllOpsResolver resolver;
 
   // Build an intepreter to run the model with
@@ -171,24 +173,23 @@ void setup()
   // TODO 2: Check if setup correctly
   // Obtain pointer to model's input and check model input parameters
   model_input = interpreter->input(0);
+  error_reporter->Report("Input size: %d", model_input->dims->size);
   // if ((model_input->dims->size != input_count) || (model_input->dims->data[0] != 1)) 
   // {
   //   error_reporter->Report("Bad input tensor parameters in model");
   //   return;
   // }
 
-  // TODO 3 Random testing for input size
-  int input_length = model_input->bytes / sizeof(float);
-  error_reporter->Report("Input length: %d", input_length);
-
   // TODO 2: Check if setup correctly
   // Obtain pointer to model's output and check model output parameters
   model_output = interpreter->output(0);
+  error_reporter->Report("Output size: %d", model_output->dims->size);
   // if ((model_output->dims->size != label_count) || (model_output->dims->data[0] != 1) || (model_output->dims->data[1] != label_count)) 
   // {
   //   error_reporter->Report("Bad output tensor parameters in model");
   //   return;
   // }
+
   #else // iot board
   bool sensor_status = sensor.setupIMU();
   if(!sensor_status)
@@ -212,12 +213,10 @@ void loop()
   #ifdef BLE_SENSE_BOARD
   sensor.readAccelerometerAndGyroscope(error_reporter, input);
 
-  for(int i = 0; i < 6; i++)
+  for(uint8_t i = 0; i < 6; i++)
   {
+    error_reporter->Report("i: %f", input[i]);
     model_input->data.f[i] = input[i];
-    // Serial.println(input[i]);
-    // error_reporter->Report("Input data %d: %d", i, input[i]);
-    // error_reporter->Report("Model input data %d: %d", i, model_input->data.f[i]);
   }
 
   // Invokes the interpreter
@@ -230,8 +229,8 @@ void loop()
 
   // Read the results of the ml model
   int8_t max_score = 0;
-  int max_index = 0;
-  for (int i = 0; i < label_count; i++) 
+  uint8_t max_index = 0;
+  for (uint8_t i = 0; i < label_count; i++) 
   {
     const float score = model_output->data.f[i];
     // error_reporter->Report("Score of %d: %f", i, score);
@@ -246,7 +245,7 @@ void loop()
   // output_handler.handleOutput(error_reporter, max_index, input);
   handleOutput(error_reporter, max_index, input);
   #else // iot board
-  int max_index = 0;
+  uint8_t max_index = 0;
   sensor.readAccelerometerAndGyroscope(input);
   handleOutput(max_index, input);
   #endif
@@ -313,7 +312,7 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     // Check what the sensors were
     for(int i = 0; i < SENSOR_COUNT; i++)
     {
-        Serial.println(sensor_data[i]);
+        // Serial.println(sensor_data[i]);
     }
 
     // Check what was the result of the model

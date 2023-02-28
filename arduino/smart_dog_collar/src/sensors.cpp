@@ -1,7 +1,7 @@
 #define SMART_DOG_COLLAR_DEBUG
 // #undef SMART_DOG_COLLAR_DEBUG
 #define BLE_SENSE_BOARD
-#undef BLE_SENSE_BOARD
+// #undef BLE_SENSE_BOARD
 
 #include "../inc/sensors.h"
 
