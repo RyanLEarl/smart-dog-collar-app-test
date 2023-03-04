@@ -38,9 +38,9 @@
 #define SEIZURE 4
 // TODO LIST
 // 1: Double check data FIFO
-// 2: tensor input/output checks
-// 3: Figure out if the current ml model input is correct
-// 4: output handler (AWS stuff)
+// 2: Figure out if the current ml model input is correct
+  // Output is NaN?
+// 3: output handler (AWS stuff)
 
 const char ssid[]        = SECRET_SSID;
 const char pass[]        = SECRET_PASS;
@@ -66,18 +66,21 @@ namespace
   /*************/
   /* Variables */
   /*************/
+  constexpr int input_width = 80;
   constexpr int input_count = 6;
+  constexpr int input_size = input_count * input_width;
   constexpr int label_count = 7;
 
   Sensors sensor;
   // OutputHandler output_handler;
-  float input[6] = {0, 0, 0, 0, 0, 0}; // Gyroscope x, y, z followed by accelerometer x, y, z
+  float input_buffer[input_size] = {0}; // Gyroscope x, y, z followed by accelerometer x, y, z
+  int buffer_start = 0;
 
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
-  // determined by experimentation.
+  // determined by experimentation. But can be approximated by dividing the model size by 1024
   #ifdef BLE_SENSE_BOARD
-  constexpr int kTensorArenaSize = 45 * 1024;
+  constexpr int kTensorArenaSize = 17 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
   tflite::ErrorReporter *error_reporter = nullptr;
   const tflite::Model *model = nullptr;
@@ -115,10 +118,11 @@ void setup()
   // Setup logging
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
-  error_reporter->Report("Started");
   #else
   Serial.begin(9600);
   #endif
+
+  error_reporter->Report("Attempting to setup");
 
   // Setup structs
   sensor = Sensors();
@@ -170,26 +174,26 @@ void setup()
     return;
   }
 
-  // TODO 2: Check if setup correctly
   // Obtain pointer to model's input and check model input parameters
   model_input = interpreter->input(0);
-  error_reporter->Report("Input size: %d", model_input->dims->size);
-  // if ((model_input->dims->size != input_count) || (model_input->dims->data[0] != 1)) 
-  // {
-  //   error_reporter->Report("Bad input tensor parameters in model");
-  //   return;
-  // }
+  if ((model_input->dims->size != 3) || (model_input->dims->data[0] != 1)
+                                     || (model_input->dims->data[1] != input_width)
+                                     || (model_input->dims->data[2] != input_count)) 
+  {
+    error_reporter->Report("Bad input tensor parameters in model");
+    return;
+  }
 
-  // TODO 2: Check if setup correctly
   // Obtain pointer to model's output and check model output parameters
   model_output = interpreter->output(0);
-  error_reporter->Report("Output size: %d", model_output->dims->size);
-  // if ((model_output->dims->size != label_count) || (model_output->dims->data[0] != 1) || (model_output->dims->data[1] != label_count)) 
-  // {
-  //   error_reporter->Report("Bad output tensor parameters in model");
-  //   return;
-  // }
+  if ((model_output->dims->size != 2) || (model_output->dims->data[0] != 1) 
+                                      || (model_output->dims->data[1] != label_count)) 
+  {
+    error_reporter->Report("Bad output tensor parameters in model");
+    return;
+  }
 
+  error_reporter->Report("Setup successful");
   #else // iot board
   bool sensor_status = sensor.setupIMU();
   if(!sensor_status)
@@ -197,26 +201,29 @@ void setup()
     Serial.println("Sensor failed to start");
     return;
   }
+
+  Serial.println("Setup successful");
   #endif
 }
 
 void loop() 
 {
   // Check if data is avaliable
-  const bool data_available = IMU.accelerationAvailable() || IMU.gyroscopeAvailable();
+  bool data_available = IMU.accelerationAvailable() || IMU.gyroscopeAvailable();
   if (!data_available) 
   {
+    error_reporter->Report("No data available");
     return;
   }
 
   // Read data from sensors
   #ifdef BLE_SENSE_BOARD
-  sensor.readAccelerometerAndGyroscope(error_reporter, input);
+  sensor.readAccelerometerAndGyroscope(error_reporter, input_buffer, input_width);
 
-  for(uint8_t i = 0; i < 6; i++)
+  // Insert data into the model
+  for(int i = 0; i < input_size; i++)
   {
-    error_reporter->Report("i: %f", input[i]);
-    model_input->data.f[i] = input[i];
+    model_input->data.f[i] = input_buffer[i];
   }
 
   // Invokes the interpreter
@@ -228,12 +235,12 @@ void loop()
   }
 
   // Read the results of the ml model
-  int8_t max_score = 0;
+  float max_score = 0;
   uint8_t max_index = 0;
   for (uint8_t i = 0; i < label_count; i++) 
   {
     const float score = model_output->data.f[i];
-    // error_reporter->Report("Score of %d: %f", i, score);
+    error_reporter->Report("Score of %d: %f", i, score);
     if ((i == 0) || (score > max_score)) 
     {
       max_score = score;
@@ -242,12 +249,12 @@ void loop()
   }
 
   // Handle the results of the ml model
-  // output_handler.handleOutput(error_reporter, max_index, input);
-  handleOutput(error_reporter, max_index, input);
+  // output_handler.handleOutput(error_reporter, max_index, input_buffer);
+  handleOutput(error_reporter, max_index, input_buffer);
   #else // iot board
   uint8_t max_index = 0;
-  sensor.readAccelerometerAndGyroscope(input);
-  handleOutput(max_index, input);
+  sensor.readAccelerometerAndGyroscope(input_buffer, input_width);
+  handleOutput(max_index, input_buffer);
   #endif
 }
 

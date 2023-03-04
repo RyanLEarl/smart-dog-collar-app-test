@@ -53,10 +53,10 @@ private:
 public:
     #ifdef BLE_SENSE_BOARD
     bool setupIMU(tflite::ErrorReporter*);
-    void readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*); 
+    void readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*, int); 
     #else
     bool setupIMU();
-    void readAccelerometerAndGyroscope(float*); 
+    void readAccelerometerAndGyroscope(float*, int); 
     #endif
 };
 

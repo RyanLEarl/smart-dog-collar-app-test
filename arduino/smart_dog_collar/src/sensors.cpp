@@ -45,7 +45,7 @@ bool Sensors::setupIMU(tflite::ErrorReporter *error_reporter)
 // NOTE: readGyroscope and readAccelerometer don't return anything in the provided
 // library, so if they get updated add a ! before the if check
 // Approximately 11 per second?
-void Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporter, float *input) 
+void Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporter, float *input, int samples) 
 { 
     int error_status = 0;
 
@@ -168,7 +168,7 @@ bool Sensors::setupIMU()
 // NOTE: readGyroscope and readAccelerometer don't return anything in the provided
 // library, so if they get updated add a ! before the if check
 // Approximately 11 per second?
-void Sensors::readAccelerometerAndGyroscope(float *input) 
+void Sensors::readAccelerometerAndGyroscope(float *input, int samples) 
 { 
     int error_status = 0;
 

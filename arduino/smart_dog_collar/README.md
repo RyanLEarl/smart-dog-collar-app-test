@@ -25,6 +25,5 @@ If you want the debugging values to be shown, make sure to comment out "#undef S
 
 4: The output_handler.cpp and output_handler.h files are not being used due to the AWS arduino code causing problems. So it has been moved to the smart_dog_collar.ino file. They are kept just in case a way to prevent the problem is found.
 
-5: The BLE Sense board does not work due to not having wifi
 
-6: The warnings about "changing start of section .bss by 4 bytes" shouldn't cause any negative effects
+5: The current model we are using is the byte array from "dense_nn_experiment.cc"
