@@ -37,10 +37,8 @@
 #define LABEL_COUNT 7
 #define SEIZURE 4
 // TODO LIST
-// 1: Double check data FIFO
-// 2: Figure out if the current ml model input is correct
-  // Output is NaN?
-// 3: output handler (AWS stuff)
+// 1: Figure out why tensor output is NaN
+// 2: output handler (AWS stuff)
 
 const char ssid[]        = SECRET_SSID;
 const char pass[]        = SECRET_PASS;
@@ -73,8 +71,8 @@ namespace
 
   Sensors sensor;
   // OutputHandler output_handler;
-  float input_buffer[input_size] = {0}; // Gyroscope x, y, z followed by accelerometer x, y, z
-  int buffer_start = 0;
+  float input_buffer[input_size] = {0.0f}; // Gyroscope x, y, z followed by accelerometer x, y, z
+  uint8_t buffer_start = 0;
 
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
@@ -91,8 +89,6 @@ namespace
 
   const char *labels[LABEL_COUNT] = { "car", "leisure", "play", "run_jog",
                                       "seizure", "sleep", "walk" };
-  int orientations[3];
-
   int gyroscopeOrientation;
   int sensorSensitivity = 100;
 }
@@ -109,6 +105,7 @@ unsigned long getTime();
 void connectMQTT();
 void onMessageReceived(int);
 
+// Runs once on startup
 void setup() 
 {
   #ifdef BLE_SENSE_BOARD
@@ -206,6 +203,7 @@ void setup()
   #endif
 }
 
+// Runs forever once setup is done
 void loop() 
 {
   // Check if data is avaliable
@@ -218,12 +216,21 @@ void loop()
 
   // Read data from sensors
   #ifdef BLE_SENSE_BOARD
-  sensor.readAccelerometerAndGyroscope(error_reporter, input_buffer, input_width);
+  sensor.readAccelerometerAndGyroscope(error_reporter, &input_buffer[buffer_start * input_count]);
+
+  // Make sure the buffer_start is valid
+  if(buffer_start >= 80 || buffer_start < 0)
+  {
+    error_reporter->Report("Invalid buffer start value");
+    return;
+  }
 
   // Insert data into the model
-  for(int i = 0; i < input_size; i++)
+  error_reporter->Report("Number of inputs: %d", model_input->dims->data[1] * model_input->dims->data[2]);
+  for(int i = 0; i < (model_input->dims->data[1] * model_input->dims->data[2]); i++)
   {
-    model_input->data.f[i] = input_buffer[i];
+    // Insert Gyroscope followed by Accelerometer data starting with the offset + 1 to do FIFO
+    model_input->data.f[i] = input_buffer[(((buffer_start + 1) * input_count) + i) % input_size];
   }
 
   // Invokes the interpreter
@@ -234,10 +241,11 @@ void loop()
     return;
   }
 
+  // TODO Output is NaN for some reason
   // Read the results of the ml model
   float max_score = 0;
   uint8_t max_index = 0;
-  for (uint8_t i = 0; i < label_count; i++) 
+  for(int i = 0; i < model_output->dims->data[1]; i++)
   {
     const float score = model_output->data.f[i];
     error_reporter->Report("Score of %d: %f", i, score);
@@ -253,9 +261,11 @@ void loop()
   handleOutput(error_reporter, max_index, input_buffer);
   #else // iot board
   uint8_t max_index = 0;
-  sensor.readAccelerometerAndGyroscope(input_buffer, input_width);
-  handleOutput(max_index, input_buffer);
+  sensor.readAccelerometerAndGyroscope(input_buffer&input_buffer[buffer_start * input_count]);
   #endif
+
+  buffer_start++;
+  buffer_start %= input_width;
 }
 
 #ifndef BLE_SENSE_BOARD

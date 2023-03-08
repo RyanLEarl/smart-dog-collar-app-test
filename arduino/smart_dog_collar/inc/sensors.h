@@ -12,7 +12,7 @@
 #include <Arduino_LSM6DS3.h> // IoT
 #endif
 
-#define DATA_LENGTH 300
+#define DATA_LENGTH 80
 #define ACCELERATION_COUNT 3
 #define ACCELERATION_DATA_LENGTH (DATA_LENGTH * 3)
 #define GYROSCOPE_COUNT 3
@@ -20,6 +20,9 @@
 #define INPUT_COUNT 6
 #define TARGET_HZ 17 // Take 17 samples per second
 #define NORMALIZATION 1000
+
+// These might not be the best since the orientation 
+// of the arduino changes the values when not moving.
 #define ACCELERATION_X_NORM -100
 #define ACCELERATION_Y_NORM -450
 #define ACCELERATION_Z_NORM -8170
@@ -53,10 +56,10 @@ private:
 public:
     #ifdef BLE_SENSE_BOARD
     bool setupIMU(tflite::ErrorReporter*);
-    void readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*, int); 
+    void readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*); 
     #else
     bool setupIMU();
-    void readAccelerometerAndGyroscope(float*, int); 
+    void readAccelerometerAndGyroscope(float*); 
     #endif
 };
 

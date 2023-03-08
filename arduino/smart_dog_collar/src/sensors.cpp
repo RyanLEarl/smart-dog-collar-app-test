@@ -44,8 +44,8 @@ bool Sensors::setupIMU(tflite::ErrorReporter *error_reporter)
 // and stores it in a FIFO buffer
 // NOTE: readGyroscope and readAccelerometer don't return anything in the provided
 // library, so if they get updated add a ! before the if check
-// Approximately 11 per second?
-void Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporter, float *input, int samples) 
+// We want it to read approximately 11 per second?
+void Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporter, float *input) 
 { 
     int error_status = 0;
 
@@ -167,8 +167,8 @@ bool Sensors::setupIMU()
 // and stores it in a FIFO buffer
 // NOTE: readGyroscope and readAccelerometer don't return anything in the provided
 // library, so if they get updated add a ! before the if check
-// Approximately 11 per second?
-void Sensors::readAccelerometerAndGyroscope(float *input, int samples) 
+// We want it to read pproximately 11 per second
+void Sensors::readAccelerometerAndGyroscope(float *input) 
 { 
     int error_status = 0;
 
