@@ -71,7 +71,7 @@ namespace
 
   Sensors sensor;
   // OutputHandler output_handler;
-  float input_buffer[input_size] = {0.0f}; // Gyroscope x, y, z followed by accelerometer x, y, z
+  float input_buffer[input_size] = {1.0f}; // Gyroscope x, y, z followed by accelerometer x, y, z
   uint8_t buffer_start = 0;
 
   // Create an area of memory to use for input, output, and intermediate arrays.
@@ -231,6 +231,7 @@ void loop()
   {
     // Insert Gyroscope followed by Accelerometer data starting with the offset + 1 to do FIFO
     model_input->data.f[i] = input_buffer[(((buffer_start + 1) * input_count) + i) % input_size];
+    // error_reporter->Report("INPUT %d: %f", i, input_buffer[(((buffer_start + 1) * input_count) + i) % input_size]);
   }
 
   // Invokes the interpreter
@@ -244,12 +245,13 @@ void loop()
   // TODO Output is NaN for some reason
   // Read the results of the ml model
   float max_score = 0;
-  uint8_t max_index = 0;
+  uint8_t max_index = 5;
   for(int i = 0; i < model_output->dims->data[1]; i++)
   {
     const float score = model_output->data.f[i];
     error_reporter->Report("Score of %d: %f", i, score);
-    if ((i == 0) || (score > max_score)) 
+    // if ((i == 0) || (score > max_score)) 
+    if ((score > max_score)) 
     {
       max_score = score;
       max_index = i;
