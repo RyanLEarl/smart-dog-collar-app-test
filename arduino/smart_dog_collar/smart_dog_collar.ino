@@ -37,8 +37,9 @@
 #define LABEL_COUNT 7
 #define SEIZURE 4
 // TODO LIST
-// 1: Figure out why tensor output is NaN
+// 1: Reading data way too fast (Only want 7 samples per second)
 // 2: output handler (AWS stuff)
+// 3: Even when arduino is still, acceleration is nonzero if tilted
 
 const char ssid[]        = SECRET_SSID;
 const char pass[]        = SECRET_PASS;
@@ -78,7 +79,7 @@ namespace
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation. But can be approximated by dividing the model size by 1024
   #ifdef BLE_SENSE_BOARD
-  constexpr int kTensorArenaSize = 17 * 1024;
+  constexpr int kTensorArenaSize = 50 * 1025;
   uint8_t tensor_arena[kTensorArenaSize];
   tflite::ErrorReporter *error_reporter = nullptr;
   const tflite::Model *model = nullptr;
@@ -210,7 +211,6 @@ void loop()
   bool data_available = IMU.accelerationAvailable() || IMU.gyroscopeAvailable();
   if (!data_available) 
   {
-    error_reporter->Report("No data available");
     return;
   }
 
@@ -226,12 +226,10 @@ void loop()
   }
 
   // Insert data into the model
-  error_reporter->Report("Number of inputs: %d", model_input->dims->data[1] * model_input->dims->data[2]);
-  for(int i = 0; i < (model_input->dims->data[1] * model_input->dims->data[2]); i++)
+  for(int i = 0; i < input_count; i++)
   {
     // Insert Gyroscope followed by Accelerometer data starting with the offset + 1 to do FIFO
     model_input->data.f[i] = input_buffer[(((buffer_start + 1) * input_count) + i) % input_size];
-    // error_reporter->Report("INPUT %d: %f", i, input_buffer[(((buffer_start + 1) * input_count) + i) % input_size]);
   }
 
   // Invokes the interpreter
@@ -242,18 +240,16 @@ void loop()
     return;
   }
 
-  // TODO Output is NaN for some reason
   // Read the results of the ml model
-  float max_score = 0;
-  uint8_t max_index = 5;
-  for(int i = 0; i < model_output->dims->data[1]; i++)
+  float max_score_float = 0;
+  uint8_t max_index = 0;
+  for(int i = 0; i < label_count; i++)
   {
-    const float score = model_output->data.f[i];
-    error_reporter->Report("Score of %d: %f", i, score);
-    // if ((i == 0) || (score > max_score)) 
-    if ((score > max_score)) 
+    const float float_score = model_output->data.f[i];
+    // error_reporter->Report("Float Score of %d: %f", i, float_score);
+    if(float_score > max_score_float)
     {
-      max_score = score;
+      max_score_float = float_score;
       max_index = i;
     }
   }
