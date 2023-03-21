@@ -16,11 +16,7 @@ phases:
     commands:
       # NPX used to keep version of serverless
       - echo "----- Running Front-End Build ------"
-      - cd ${CODEBUILD_SRC_DIR}/front-end
-      - aws s3 sync "./assets" "s3://collar-test"
-      - aws s3 sync "./pages" "s3://collar-test"
-      - aws s3 sync "./index" "s3://collar-test"
-      - aws s3 sync "./index.js" "s3://collar-test"
+      - aws s3 sync "./front-end" "s3://collar-test"
       - echo "----- Running Back-End Build ------"
       - cd ${CODEBUILD_SRC_DIR}/back-end
       - npm install
