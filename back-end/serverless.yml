@@ -45,7 +45,9 @@ functions:
   - ${file(cloudformation/functions.yml)}
 
 resources: 
+  - ${file(cloudformation/hosting.yml)}
   - ${file(cloudformation/resources.yml)}
+  - ${file(cloudformation/outputs.yml)}
 
 plugins:
   - serverless-webpack
