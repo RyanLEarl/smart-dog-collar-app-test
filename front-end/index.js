@@ -35,7 +35,7 @@ function createHeader() {
       item.setAttribute("href", "/");
     }
     else {
-      item.setAttribute("href", "/pages/"+getDirectories[i])+".html";
+      item.setAttribute("href", "/pages/"+getDirectories[i]+".html");
     }
     item.innerHTML = getDirectories[i];
     list.appendChild(item)
