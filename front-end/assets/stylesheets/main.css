@@ -89,12 +89,6 @@ li a {
   font-size: 1.75vw ;
 }
 
-img {
-  width: 800px;
-  height: auto;
-  display: block;
-}
-
 .purpose, .projectValue, .usage {
   font-size: 30px;
   max-width: 70%;
@@ -128,12 +122,84 @@ img {
   margin-left: -20px;
 }
 
-.members img {
-  width: 100px;
-  height: auto;
+.card img {
+  width: 100%
 }
 
-.members h1{
-  text-align: left;
-  font-size: 30px;
+.member {
+  float: left;
+  width: 33.3%;
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
+
+@media screen and (max-width: 650px) {
+  .member {
+    width: 100%;
+    display: block;
+  }
+}
+
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.container {
+  padding: 0 16px;
+}
+
+.container::after, .members::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.title {
+  color: grey;
+}
+
+.button {
+  border: none;
+  outline: 0;
+  display: inline-block;
+  padding: 8px;
+  color: white;
+  background-color: #000;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.button:hover {
+  background-color: #555;
+}
+
+.functionality {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 5px;
+}
+
+.functionality img {
+  width: 90%;
+}
+
+/* @media screen and (max-width: 900px) {
+  .functionality img {
+    width: 1200px
+  }
+} */
+
+
+.steps {
+  /* list-style: inside; */
+  list-style-type: square;
+  font-size: 2vw; 
+}
+
+@media screen and (min-width: 1600px) {
+  .steps {
+     font-size: 30px;
+  }
+}
+

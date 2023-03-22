@@ -9,6 +9,22 @@
     <script> createHeader();</script>
   </header>
   <body>
-    <img src="/assets/images/architectural_diagram.png">
+    <div class="functionality">
+      <ul class="explanation">
+        <li class="steps">
+          Arduino board reports gyroscope data over wifi network, using MQTT, to AWS IOT Core
+        </li>
+        <li class="steps">
+          An IoT Rule is established to listen to the output of the MQTT topic and allow the message to be routed elsewhere
+        </li>
+        <li class="steps">
+          Lambda function is triggered when the rule receives new messages, takes json event message, splits it up into the json keys, and generates a message before forwarding it to an sns topic
+        </li>
+        <li class="steps">
+          SNS topic can be subscribed to and used to send messages, notifications, and other data to application 
+        </li>
+      </ul>
+      <img src="/assets/images/architectural_diagram.png">
+    </div>
   </body>
 </html>
