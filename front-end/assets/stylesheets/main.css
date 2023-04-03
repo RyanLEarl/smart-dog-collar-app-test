@@ -1,3 +1,5 @@
+/* ******************************** GENERAL ******************************* */
+
 body {
   background: #1d2029;
   font-family: helvetica, arial, 'sans-serif';
@@ -27,6 +29,16 @@ h1 {
   color: rgb(255, 255, 255);
   font-weight: bold;
 }
+
+#footer {
+  position: absolute;
+  bottom: 0;
+  width: 99%;
+  height: 2.5rem;
+  text-align: right;
+}
+
+/* ******************************** NAVBAR ******************************* */
 
 #nav {
   display: flex;
@@ -76,12 +88,10 @@ li a {
   background-color: #002cbd;
 }
 
-#footer {
-  position: absolute;
-  bottom: 0;
-  width: 99%;
-  height: 2.5rem;
-  text-align: right;
+/* ******************************** HOME PAGE ******************************* */
+
+.introduction p{
+  padding: 0px 31px;
 }
 
 #about {
@@ -89,13 +99,16 @@ li a {
   font-size: 1.75vw ;
 }
 
-.purpose, .projectValue, .usage {
+.purpose, .projectValue, .usage, .backStory {
   font-size: 30px;
   max-width: 70%;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
 
 .purpose #purpose, #backStory, .projectValue #projectValue, .usage #usage{
-  font-size: 45px;
+  font-size: 60px;
   text-align: left;
 }
 
@@ -121,6 +134,8 @@ li a {
   position: absolute;
   margin-left: -20px;
 }
+
+/* ******************************** CONTACT PAGE ******************************* */
 
 .card img {
   width: 100%;
@@ -176,6 +191,8 @@ li a {
   background-color: #555;
 }
 
+/* ******************************** FUNCTION PAGE ******************************* */
+
 .functionality {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -204,6 +221,8 @@ li a {
      font-size: 30px;
   }
 }
+
+/* ******************************** DOCUMENTATION PAGE ******************************* */
 
 .documentation {
   position: relative;
