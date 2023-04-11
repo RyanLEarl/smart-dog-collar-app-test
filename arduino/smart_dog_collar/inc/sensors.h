@@ -18,14 +18,10 @@
 #define GYROSCOPE_COUNT 3
 #define GYROSCOPE_DATA_LENGTH (DATA_LENGTH * 3)
 #define INPUT_COUNT 6
-#define TARGET_HZ 17 // Take 17 samples per second
-#define NORMALIZATION 1000
-
-// These might not be the best since the orientation 
-// of the arduino changes the values when not moving.
-#define ACCELERATION_X_NORM -100
-#define ACCELERATION_Y_NORM -450
-#define ACCELERATION_Z_NORM -8170
+// #define TARGET_HZ 17 // Take 17 samples per second
+#define TARGET_HZ 12 //7 // Take 17 samples per second
+#define A_NORMALIZATION 1
+#define G_NORMALIZATION 100
 
 class Sensors{
 /*************/
@@ -50,16 +46,19 @@ private:
     int gyroscope_sample_every_n;
     int gyroscope_skip_counter = 1;
 
+    int sample_every_n;
+    int skip_counter = 1;
+
 /***********/
 /* Methods */
 /***********/
 public:
     #ifdef BLE_SENSE_BOARD
     bool setupIMU(tflite::ErrorReporter*);
-    void readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*); 
+    bool readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*);
     #else
     bool setupIMU();
-    void readAccelerometerAndGyroscope(float*); 
+    bool readAccelerometerAndGyroscope(float*);
     #endif
 };
 
