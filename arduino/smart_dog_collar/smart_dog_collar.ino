@@ -37,9 +37,12 @@
 #define LABEL_COUNT 7
 #define SEIZURE 4
 // TODO LIST
-// 1: Reading data way too fast (Only want 7 samples per second)
-// 2: output handler (AWS stuff)
-// 3: Even when arduino is still, acceleration is nonzero if tilted
+// 1: Acceleration not being read?
+// 2: Reading data way too fast (Only want 7 samples per second)
+// 3: output handler (AWS stuff)
+// 4: Even when arduino is still, acceleration is nonzero if tilted
+// 5: Collect data for ble sense to train new model on
+// 6: Eventually develop a better neural network
 
 const char ssid[]        = SECRET_SSID;
 const char pass[]        = SECRET_PASS;
@@ -137,6 +140,7 @@ void setup()
     error_reporter->Report("Sensor failed to start");
     return;
   }
+  error_reporter->Report("Sensor setup successful");
 
   // Map the model into a usable data structure.
   model = tflite::GetModel(sdc_model_data);
@@ -207,21 +211,19 @@ void setup()
 // Runs forever once setup is done
 void loop() 
 {
-  // Check if data is avaliable
-  bool data_available = IMU.accelerationAvailable() || IMU.gyroscopeAvailable();
-  if (!data_available) 
+  // Make sure the buffer_start is valid
+  if(buffer_start >= input_width || buffer_start < 0)
   {
+    error_reporter->Report("Invalid buffer start value");
+    buffer_start %= input_width;
     return;
   }
 
   // Read data from sensors
   #ifdef BLE_SENSE_BOARD
-  sensor.readAccelerometerAndGyroscope(error_reporter, &input_buffer[buffer_start * input_count]);
-
-  // Make sure the buffer_start is valid
-  if(buffer_start >= 80 || buffer_start < 0)
+  if(!sensor.readAccelerometerAndGyroscope(error_reporter, &input_buffer[buffer_start * input_count]))
   {
-    error_reporter->Report("Invalid buffer start value");
+    // Wasn't able to read data from the sensors so don't do anything else
     return;
   }
 
@@ -259,7 +261,10 @@ void loop()
   handleOutput(error_reporter, max_index, input_buffer);
   #else // iot board
   uint8_t max_index = 0;
-  sensor.readAccelerometerAndGyroscope(input_buffer&input_buffer[buffer_start * input_count]);
+  if(!sensor.readAccelerometerAndGyroscope(input_buffer&input_buffer[buffer_start * input_count]))
+  {
+    return;
+  }
   #endif
 
   buffer_start++;
@@ -321,6 +326,10 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     if(activity == SEIZURE)
     {
         // Send push notification
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
     }
 
     #ifdef SMART_DOG_COLLAR_DEBUG
