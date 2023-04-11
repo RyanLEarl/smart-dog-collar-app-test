@@ -37,12 +37,10 @@
 #define LABEL_COUNT 7
 #define SEIZURE 4
 // TODO LIST
-// 1: Acceleration not being read?
-// 2: Reading data way too fast (Only want 7 samples per second)
-// 3: output handler (AWS stuff)
-// 4: Even when arduino is still, acceleration is nonzero if tilted
-// 5: Collect data for ble sense to train new model on
-// 6: Eventually develop a better neural network
+// 1: Reading data way too fast (Only want 7 samples per second)
+// 2: output handler (AWS push notification stuff)
+// 3: Collect data for ble sense to train new model on
+// 4: Eventually develop a better neural network
 
 const char ssid[]        = SECRET_SSID;
 const char pass[]        = SECRET_PASS;
@@ -390,7 +388,7 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     // Check what the sensors were
     for(int i = 0; i < SENSOR_COUNT; i++)
     {
-        Serial.println(sensor_data[i]);
+        // Serial.println(sensor_data[i]);
     }
 
     // Check what was the result of the model
