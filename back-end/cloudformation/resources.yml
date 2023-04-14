@@ -25,7 +25,12 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
-      BucketPolicy:
+      ource: "arn:aws:s3:::smart-dog-collar/*"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+  smartDogCollarBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -33,6 +38,4 @@ Resources:
               Effect: "Allow"
               Principal: "*"
               Action: "s3:GetObject"
-              Resource: "arn:aws:s3:::smart-dog-collar/*"
-      WebsiteConfiguration:
-        IndexDocument: index.html
+              Res
