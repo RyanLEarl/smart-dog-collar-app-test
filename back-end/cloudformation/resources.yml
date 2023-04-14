@@ -15,3 +15,24 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: "smart-dog-collar-app-test-snsTopic"
+  smartDogCollarBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: smart-dog-collar
+      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      BucketPolicy:
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "PublicReadGetObject"
+              Effect: "Allow"
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: "arn:aws:s3:::smart-dog-collar/*"
+      WebsiteConfiguration:
+        IndexDocument: index.html
