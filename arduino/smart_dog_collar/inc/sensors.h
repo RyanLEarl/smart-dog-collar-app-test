@@ -18,9 +18,8 @@
 #define GYROSCOPE_COUNT 3
 #define GYROSCOPE_DATA_LENGTH (DATA_LENGTH * 3)
 #define INPUT_COUNT 6
-// #define TARGET_HZ 17 // Take 17 samples per second
-#define TARGET_HZ 12 //7 // Take 17 samples per second
-#define A_NORMALIZATION 1
+#define TARGET_HZ 16
+#define A_NORMALIZATION 0.40
 #define G_NORMALIZATION 100
 
 class Sensors{

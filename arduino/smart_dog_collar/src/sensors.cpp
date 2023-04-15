@@ -46,13 +46,6 @@ bool Sensors::setupIMU(tflite::ErrorReporter *error_reporter)
 // We want it to read approximately 11 per second?
 bool Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporter, float *input)
 { 
-    // Reduce sensor input speed
-    if(skip_counter < sample_every_n)
-    {
-        skip_counter++;
-        return false;
-    }
-
     // Try to get data from the gyroscope
     if(IMU.gyroscopeAvailable())
     {
@@ -164,13 +157,6 @@ bool Sensors::setupIMU()
 // We want it to read pproximately 11 per second
 bool Sensors::readAccelerometerAndGyroscope(float *input)
 {
-    // Reduce sensor input speed
-    if(skip_counter < sample_every_n)
-    {
-        skip_counter++;
-        return false;
-    }
-
     // Try to get data from the gyroscope
     if(IMU.gyroscopeAvailable())
     {
