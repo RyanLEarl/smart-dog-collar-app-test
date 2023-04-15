@@ -36,10 +36,11 @@
 #define SENSOR_COUNT 6
 #define LABEL_COUNT 7
 #define SEIZURE 4
+#define READS_PER_SECOND 16
 // TODO LIST
-// 1: Reading data way too fast (Only want 7 samples per second)
-// 2: output handler (AWS stuff)
-// 3: Even when arduino is still, acceleration is nonzero if tilted
+// 1: output handler (AWS push notification stuff)
+// 2: Collect data using ble sense to train new model on
+// 3: Eventually develop a better neural network
 
 const char ssid[]        = SECRET_SSID;
 const char pass[]        = SECRET_PASS;
@@ -74,6 +75,8 @@ namespace
   // OutputHandler output_handler;
   float input_buffer[input_size] = {1.0f}; // Gyroscope x, y, z followed by accelerometer x, y, z
   uint8_t buffer_start = 0;
+  uint8_t output_buffer[READS_PER_SECOND] = {5};
+  uint8_t output_buffer_start = 0;
 
   // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
@@ -137,6 +140,7 @@ void setup()
     error_reporter->Report("Sensor failed to start");
     return;
   }
+  error_reporter->Report("Sensor setup successful");
 
   // Map the model into a usable data structure.
   model = tflite::GetModel(sdc_model_data);
@@ -207,23 +211,33 @@ void setup()
 // Runs forever once setup is done
 void loop() 
 {
-  // Check if data is avaliable
-  bool data_available = IMU.accelerationAvailable() || IMU.gyroscopeAvailable();
-  if (!data_available) 
+  // Add a timer
+  const unsigned long timer = 1000UL / READS_PER_SECOND; // 17 reads per second
+  static unsigned long lastSampleTime = 0 - timer;
+  unsigned long now = millis();
+
+  // See if it is time to take a sample
+  if(!((now - lastSampleTime) >= timer))
   {
+    return;
+  }
+
+  // Make sure the buffer_start is valid
+  if(buffer_start >= input_width || buffer_start < 0)
+  {
+    error_reporter->Report("Invalid buffer start value");
+    buffer_start %= input_width;
     return;
   }
 
   // Read data from sensors
   #ifdef BLE_SENSE_BOARD
-  sensor.readAccelerometerAndGyroscope(error_reporter, &input_buffer[buffer_start * input_count]);
-
-  // Make sure the buffer_start is valid
-  if(buffer_start >= 80 || buffer_start < 0)
+  if(!sensor.readAccelerometerAndGyroscope(error_reporter, &input_buffer[buffer_start * input_count]))
   {
-    error_reporter->Report("Invalid buffer start value");
+    // Wasn't able to read data from the sensors so don't do anything else
     return;
   }
+  lastSampleTime += timer;
 
   // Insert data into the model
   for(int i = 0; i < input_count; i++)
@@ -254,12 +268,23 @@ void loop()
     }
   }
 
+  // Insert result into the output buffer
+  output_buffer[output_buffer_start] = max_index;
+  output_buffer_start++;
+  output_buffer_start %= READS_PER_SECOND;
+
   // Handle the results of the ml model
   // output_handler.handleOutput(error_reporter, max_index, input_buffer);
-  handleOutput(error_reporter, max_index, input_buffer);
+  if(output_buffer_start == 0)
+  {
+      handleOutput(error_reporter, max_index, input_buffer);
+  }
   #else // iot board
   uint8_t max_index = 0;
-  sensor.readAccelerometerAndGyroscope(input_buffer&input_buffer[buffer_start * input_count]);
+  if(!sensor.readAccelerometerAndGyroscope(input_buffer&input_buffer[buffer_start * input_count]))
+  {
+    return;
+  }
   #endif
 
   buffer_start++;
@@ -316,11 +341,49 @@ void setupOutputHandler()
 #ifdef BLE_SENSE_BOARD 
 #ifdef BLE_SENSE_NO_WIFI
 void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *sensor_data)
-{ 
+{
+    uint8_t event = 0;
+    uint8_t event_count = 0;
+
+    // Find label with the highest frequency
+    for(uint8_t i = 0; i < (READS_PER_SECOND - 1); i++)
+    {
+        uint8_t new_event_count = 0;
+
+        // Count current item
+        for(uint8_t j = i + 1; j < READS_PER_SECOND; j++)
+        {
+            if(output_buffer[i] == output_buffer[j])
+            {
+                new_event_count++;
+            }
+        }
+
+        // Update event if necessary
+        if(new_event_count > event_count)
+        {
+            event = output_buffer[i];
+            event_count = new_event_count;
+        }
+
+        // Stop if impossible for any future item
+        if(event_count > (READS_PER_SECOND - i - 1))
+        {
+            break;
+        }
+    }
+
     // Handle seizure
-    if(activity == SEIZURE)
+    if(event == SEIZURE)
     {
         // Send push notification
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        #ifdef SMART_DOG_COLLAR_DEBUG
+        delay(5000);
+        #endif
     }
 
     #ifdef SMART_DOG_COLLAR_DEBUG
@@ -331,7 +394,7 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     }
 
     // Check what was the result of the model
-    error_reporter->Report(labels[activity]);
+    error_reporter->Report(labels[event]);
     #endif
 }
 #else
@@ -353,10 +416,44 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     // poll for new MQTT messages and send keep alive
     mqttClient.poll();
 
+    uint8_t event = 0;
+    uint8_t event_count = 0;
+
+    // Find label with the highest frequency
+    for(uint8_t i = 0; i < (READS_PER_SECOND - 1); i++)
+    {
+        uint8_t new_event_count = 0;
+
+        // Count current item
+        for(uint8_t j = i + 1; j < READS_PER_SECOND; j++)
+        {
+            if(output_buffer[i] == output_buffer[j])
+            {
+                new_event_count++;
+            }
+        }
+
+        // Update event if necessary
+        if(new_event_count > event_count)
+        {
+            event = output_buffer[i];
+            event_count = new_event_count;
+        }
+
+        // Stop if impossible for any future item
+        if(event_count > (READS_PER_SECOND - i - 1))
+        {
+            break;
+        }
+    }
+
     // Handle seizure
-    if(activity == SEIZURE)
+    if(event == SEIZURE)
     {
         // Send push notification
+        #ifdef SMART_DOG_COLLAR_DEBUG
+        delay(5000);
+        #endif
     }
 
     #ifdef SMART_DOG_COLLAR_AWS_DEBUG
@@ -381,11 +478,11 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     // Check what the sensors were
     for(int i = 0; i < SENSOR_COUNT; i++)
     {
-        Serial.println(sensor_data[i]);
+        // Serial.println(sensor_data[i]);
     }
 
     // Check what was the result of the model
-    error_reporter->Report(labels[activity]);
+    error_reporter->Report(labels[event]);
     #endif
 }
 #endif
@@ -409,10 +506,44 @@ void handleOutput(int activity, float *sensor_data)
     // poll for new MQTT messages and send keep alive
     mqttClient.poll();
 
+    uint8_t event = 0;
+    uint8_t event_count = 0;
+
+    // Find label with the highest frequency
+    for(uint8_t i = 0; i < (READS_PER_SECOND - 1); i++)
+    {
+        uint8_t new_event_count = 0;
+
+        // Count current item
+        for(uint8_t j = i + 1; j < READS_PER_SECOND; j++)
+        {
+            if(output_buffer[i] == output_buffer[j])
+            {
+                new_event_count++;
+            }
+        }
+
+        // Update event if necessary
+        if(new_event_count > event_count)
+        {
+            event = output_buffer[i];
+            event_count = new_event_count;
+        }
+
+        // Stop if impossible for any future item
+        if(event_count > (READS_PER_SECOND - i - 1))
+        {
+            break;
+        }
+    }
+
     // Handle seizure
-    if(activity == SEIZURE)
+    if(event == SEIZURE)
     {
         // Send push notification
+        #ifdef SMART_DOG_COLLAR_DEBUG
+        delay(5000);
+        #endif
     }
 
     #ifdef SMART_DOG_COLLAR_AWS_DEBUG
@@ -441,7 +572,7 @@ void handleOutput(int activity, float *sensor_data)
     }
 
     // Check what was the result of the model
-    Serial.println(labels[activity]);
+    Serial.println(labels[event]);
     #endif
 }
 
