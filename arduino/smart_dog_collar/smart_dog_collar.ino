@@ -401,6 +401,8 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     error_reporter->Report(labels[event]);
     #endif
 }
+
+// Puts ML results as a serialized json message that will be used later on with WiFi
 void serializeResults(tflite::ErrorReporter*, int)
 {
     uint8_t event = 0;
