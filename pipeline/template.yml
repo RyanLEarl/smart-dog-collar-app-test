@@ -365,6 +365,7 @@ Resources:
               - sns:ListTopics
               - sns:Publish
               - sns:SetSubscriptionAttributes
+              - sns:TagResource
               - sqs:CreateQueue
               - sqs:SetQueueAttributes
               - sqs:GetQueueAttributes
@@ -467,6 +468,7 @@ Resources:
               - codebuild:UpdateProject
               - s3:*
               - sns:Publish
+              - sns:TagResource
             Resource: "*"
       Roles:
         - !Ref CodePipelineRole
