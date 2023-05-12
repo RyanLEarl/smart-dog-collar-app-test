@@ -31,6 +31,7 @@
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
+#include <ArduinoJson.h>
 #include "./inc/arduino_secrets.h"
 
 #define SENSOR_COUNT 6
@@ -100,8 +101,10 @@ namespace
 void setupOutputHandler();
 #ifdef BLE_SENSE_BOARD
 void handleOutput(tflite::ErrorReporter*, int, float*);
+void serializeResults(tflite::ErrorReporter*, int);
 #else
 void handleOutput(int, float*);
+void serializeResults(int);
 #endif
 void publishMessage();
 void connectWiFi();
@@ -277,7 +280,8 @@ void loop()
   // output_handler.handleOutput(error_reporter, max_index, input_buffer);
   if(output_buffer_start == 0)
   {
-      handleOutput(error_reporter, max_index, input_buffer);
+    serializeResults(error_reporter, max_index);
+    // handleOutput(error_reporter, max_index, input_buffer);
   }
   #else // iot board
   uint8_t max_index = 0;
@@ -397,6 +401,67 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
     error_reporter->Report(labels[event]);
     #endif
 }
+
+// Puts ML results as a serialized json message that will be used later on with WiFi
+void serializeResults(tflite::ErrorReporter*, int)
+{
+    uint8_t event = 0;
+    uint8_t event_count = 0;
+
+    // Find label with the highest frequency
+    for(uint8_t i = 0; i < (READS_PER_SECOND - 1); i++)
+    {
+        uint8_t new_event_count = 0;
+
+        // Count current item
+        for(uint8_t j = i + 1; j < READS_PER_SECOND; j++)
+        {
+            if(output_buffer[i] == output_buffer[j])
+            {
+                new_event_count++;
+            }
+        }
+
+        // Update event if necessary
+        if(new_event_count > event_count)
+        {
+            event = output_buffer[i];
+            event_count = new_event_count;
+        }
+
+        // Stop if impossible for any future item
+        if(event_count > (READS_PER_SECOND - i - 1))
+        {
+            break;
+        }
+    }
+
+    // Make seizure visible in output
+    if(event == SEIZURE)
+    {
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+        error_reporter->Report("Seizure detected");
+    }
+
+    // Turn Results into Json
+    DynamicJsonDocument doc(1024);
+    doc["type"] = "request";
+    doc["status"] = labels[event];
+
+    // Serialize Json
+    serializeJson(doc, Serial);
+
+    #ifdef SMART_DOG_COLLAR_DEBUG
+    // Check what was the result of the model
+    String jsonString;
+    deserializeJson(doc, jsonString);
+    Serial.println(jsonString);
+    // error_reporter->Report(jsonString);
+    // error_reporter->Report(labels[event]);
+    #endif
+}
 #else
 void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *sensor_data)
 { 
@@ -483,6 +548,64 @@ void handleOutput(tflite::ErrorReporter* error_reporter, int activity, float *se
 
     // Check what was the result of the model
     error_reporter->Report(labels[event]);
+    #endif
+}
+void serializeResults(int)
+{
+    uint8_t event = 0;
+    uint8_t event_count = 0;
+
+    // Find label with the highest frequency
+    for(uint8_t i = 0; i < (READS_PER_SECOND - 1); i++)
+    {
+        uint8_t new_event_count = 0;
+
+        // Count current item
+        for(uint8_t j = i + 1; j < READS_PER_SECOND; j++)
+        {
+            if(output_buffer[i] == output_buffer[j])
+            {
+                new_event_count++;
+            }
+        }
+
+        // Update event if necessary
+        if(new_event_count > event_count)
+        {
+            event = output_buffer[i];
+            event_count = new_event_count;
+        }
+
+        // Stop if impossible for any future item
+        if(event_count > (READS_PER_SECOND - i - 1))
+        {
+            break;
+        }
+    }
+
+    // Make seizure visible in output
+    if(event == SEIZURE)
+    {
+        Serial.println("Seizure detected");
+        Serial.println("Seizure detected");
+        Serial.println("Seizure detected");
+        Serial.println("Seizure detected");
+    }
+
+    // Turn Results into Json
+    DynamicJsonDocument doc(1024);
+    doc["type"] = "request";
+    doc["status"] = labels[event];
+
+    // Serialize Json
+    serializeJson(doc, Serial);
+
+    #ifdef SMART_DOG_COLLAR_DEBUG
+    // Check what was the result of the model
+    String jsonString;
+    deserializeJson(doc, jsonString);
+    Serial.println(jsonString);
+    Serial.println(labels[event]);
     #endif
 }
 #endif

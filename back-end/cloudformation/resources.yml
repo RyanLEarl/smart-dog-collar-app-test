@@ -1,24 +1,12 @@
 Resources:
-  collarQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: "smart-dog-collar-app-test-collarQueue"
-      ReceiveMessageWaitTimeSeconds: 10
-      VisibilityTimeout: 90
-  collarLoggerQueueFIFO:
-    Type: "AWS::SQS::Queue"
-    Properties:
-      QueueName: "smart-dog-collar-app-test-collarLoggerQueue.fifo"
-      FifoQueue: true
-      ContentBasedDeduplication: true
   dogCollarTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: "smart-dog-collar-app-test-snsTopic"
+      TopicName: !Sub ${self:service}-${self:provider.stage}-snsTopic
   smartDogCollarBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: smart-dog-collar-test
+      BucketName: !Sub ${self:service}-${self:provider.stage}
       AccessControl: PublicRead
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
@@ -30,7 +18,7 @@ Resources:
   smartDogCollarBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: smart-dog-collar-test
+      Bucket: !Sub ${self:service}-${self:provider.stage}
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -38,4 +26,4 @@ Resources:
             Effect: "Allow"
             Principal: "*"
             Action: "s3:GetObject"
-            Resource: "arn:aws:s3:::smart-dog-collar-test/*"
+            Resource: !Sub arn:aws:s3:::!Sub ${self:service}-${self:provider.stage}/*

@@ -43,7 +43,6 @@ bool Sensors::setupIMU(tflite::ErrorReporter *error_reporter)
 
 // Reads in samples from the accelerometer and gyroscope if data is available
 // and stores it in a FIFO buffer
-// We want it to read approximately 11 per second?
 bool Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporter, float *input)
 { 
     // Try to get data from the gyroscope

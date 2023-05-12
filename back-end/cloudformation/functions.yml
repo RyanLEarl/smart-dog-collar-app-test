@@ -1,30 +1,3 @@
-catchAllFallback:
-  handler: src/functions/catchAllFallback.handler
-  timeout: 100
-
-getCustomerContact:
-  handler: src/functions/getCustomerContact.handler
-  timeout: 60
-
 processArduinoData:
   handler: src/functions/processArduinoData.handler
   timeout: 60
-
-messageOwner:
-  handler: src/functions/messageOwner.handler
-  timeout: 60
-
-processCollarSmsQueue:
-  handler: src/functions/processCollarSmsQueue.handler
-  timeout: 90
-  # events:
-  #   - sqs:
-  #       batchSize: 1
-  #       arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarSmsQueue
-
-processCollarQueue:
-  handler: src/functions/processCollarQueue.handler
-  timeout: 90
-  # events:
-  #   - sqs:
-  #       arn: arn:aws:sqs:us-west-2:319580086754:smart-dog-collar-app-test-CollarQueue

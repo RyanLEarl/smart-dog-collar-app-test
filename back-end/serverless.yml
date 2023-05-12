@@ -12,6 +12,7 @@ provider:
   name: aws
   runtime: nodejs16.x
   region: us-west-2
+  stage: dev
   
   stackTags:
     Created By: Ryan Earl
