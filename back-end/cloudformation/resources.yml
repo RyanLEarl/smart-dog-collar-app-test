@@ -3,27 +3,47 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: !Sub ${self:service}-${self:provider.stage}-snsTopic
-  smartDogCollarBucket:
-    Type: AWS::S3::Bucket
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
     Properties:
+      # AccessControl: PublicRead
       BucketName: !Sub ${self:service}-${self:provider.stage}
-      AccessControl: PublicRead
-      PublicAccessBlockConfiguration:
+      PublicAccessBlockConfiguration: 
         BlockPublicAcls: false
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+                  
       WebsiteConfiguration:
         IndexDocument: index.html
-  smartDogCollarBucketPolicy:
-    Type: AWS::S3::BucketPolicy
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+  S3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
     Properties:
-      Bucket: !Sub ${self:service}-${self:provider.stage}
+      Bucket: !Ref S3Bucket
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Sid: "PublicReadGetObject"
-            Effect: "Allow"
-            Principal: "*"
-            Action: "s3:GetObject"
-            Resource: !Sub arn:aws:s3:::!Sub ${self:service}-${self:provider.stage}/*
+          - Sid: 'PublicReadGetObject'
+            Effect: 'Allow'
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - !GetAtt S3Bucket.Arn
+                - '/*'
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt 
+      - S3Bucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
+  S3BucketSecureURL:
+    Value: !Join 
+      - ''
+      - - 'https://'
+        - !GetAtt 
+          - S3Bucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content

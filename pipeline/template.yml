@@ -102,31 +102,31 @@ Resources:
         - "-"
         - - !Ref "AWS::StackName"
           - CodePipeline
-  AmplifyBuild:
-    Type: AWS::Amplify::App
-    Properties: 
-      # AutoBranchCreationConfig: 
-      #   AutoBranchCreationConfig
-      # BasicAuthConfig: 
-      #   BasicAuthConfig
-      # BuildSpec: String
-      # CustomHeaders: String
-      # CustomRules: 
-      #   - CustomRule
-      Description: Amplify application for Smart Dog Collar
-      EnableBranchAutoDeletion: true
-      # EnvironmentVariables: 
-      #   - EnvironmentVariable
-      # IAMServiceRole: String
-      Name: smart-dog-collar-app
-      OAuthToken: "{{resolve:secretsmanager:githubPersonalAccess:SecretString:gitHubOAuthToken}}"
-      Repository: !Ref GitHubRepo
+  # AmplifyBuild:
+  #   Type: AWS::Amplify::App
+  #   Properties: 
+  #     # AutoBranchCreationConfig: 
+  #     #   AutoBranchCreationConfig
+  #     # BasicAuthConfig: 
+  #     #   BasicAuthConfig
+  #     # BuildSpec: String
+  #     # CustomHeaders: String
+  #     # CustomRules: 
+  #     #   - CustomRule
+  #     Description: Amplify application for Smart Dog Collar
+  #     EnableBranchAutoDeletion: true
+  #     # EnvironmentVariables: 
+  #     #   - EnvironmentVariable
+  #     # IAMServiceRole: String
+  #     Name: smart-dog-collar-app
+  #     OAuthToken: "{{resolve:secretsmanager:githubPersonalAccess:SecretString:gitHubOAuthToken}}"
+  #     Repository: !Ref GitHubRepo
   Pipeline:
     DependsOn:
       - CodePipelineTrustRole
       - CodeBuildProject
       - CloudFormationTrustRole
-      - AmplifyBuild
+      # - AmplifyBuild
     Type: AWS::CodePipeline::Pipeline
     Properties:
       ArtifactStore:
@@ -147,11 +147,19 @@ Resources:
               OutputArtifacts:
                 - Name: !Join ["-", [!Ref "AWS::StackName", SourceArtifact]]
               Configuration:
-                Owner: "{{resolve:secretsmanager:githubPersonalAccess:SecretString:gitHubOwner}}"
+                Owner:  !Join 
+                  - ''
+                  - - '{{resolve:secretsmanager:'
+                    - !Ref GitHubRepo
+                    - '-githubPersonalAccess:SecretString:gitHubOwner}}'
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
                 PollForSourceChanges: false
-                OAuthToken: "{{resolve:secretsmanager:githubPersonalAccess:SecretString:gitHubOAuthToken}}"
+                OAuthToken:  !Join 
+                  - ''
+                  - - '{{resolve:secretsmanager:'
+                    - !Ref GitHubRepo
+                    - '-githubPersonalAccess:SecretString:gitHubOAuthToken}}'
               RunOrder: 1
         - Name: Build
           Actions:
@@ -410,7 +418,11 @@ Resources:
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken: "{{resolve:secretsmanager:githubPersonalAccess:SecretString:gitHubOAuthToken}}"
+        SecretToken: !Join 
+          - ''
+          - - '{{resolve:secretsmanager:'
+            - !Ref GitHubRepo
+            - '-githubPersonalAccess:SecretString:gitHubOAuthToken}}'
       RegisterWithThirdParty: true
       Filters:
         - JsonPath: "$.ref"
