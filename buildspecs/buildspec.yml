@@ -13,6 +13,9 @@ phases:
   #     #put tests here
   #     - npm test
   build:
+    env:
+      variables:
+        ACCOUNT_ID: !Ref 'AWS::AccountId'
     commands:
       # NPX used to keep version of serverless
       - echo "----- Running Front-End Build ------"
