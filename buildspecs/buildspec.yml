@@ -16,7 +16,6 @@ phases:
     commands:
       # NPX used to keep version of serverless
       - echo "----- Running Front-End Build ------"
-      - aws s3 sync "./front-end" "s3://smart-dog-collar-app-test-423425829640-dev"
       - echo "----- Running Back-End Build ------"
       - cd ${CODEBUILD_SRC_DIR}/back-end
       - npm install

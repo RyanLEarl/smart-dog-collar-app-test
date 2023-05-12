@@ -7,7 +7,7 @@ Resources:
     Type: 'AWS::S3::Bucket'
     Properties:
       # AccessControl: PublicRead
-      BucketName: !Sub ${self:service}-${self:provider.stage}
+      BucketName: !Sub ${self:service}-${self:provider.stage}-${AWS::AccountId}
       PublicAccessBlockConfiguration: 
         BlockPublicAcls: false
         BlockPublicPolicy: false
