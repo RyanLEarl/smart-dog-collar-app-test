@@ -31,6 +31,8 @@ provider:
     - Effect: "Allow"
       Action:
         - "sns:Publish"
+        - "iot:ReplaceTopicRule"
+        - "sqs:SendMessage"
       Resource: "*"
     - Effect: "Allow"
       Action:
