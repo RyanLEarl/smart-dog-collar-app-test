@@ -469,6 +469,7 @@ Resources:
               - s3:*
               - sns:Publish
               - sns:TagResource
+              - sqs:SendMessage
             Resource: "*"
       Roles:
         - !Ref CodePipelineRole

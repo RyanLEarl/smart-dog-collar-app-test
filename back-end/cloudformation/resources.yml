@@ -38,10 +38,12 @@ Resources:
     Properties: 
       RuleName: !Sub smart_dog_collar_${self:provider.stage}_${AWS::AccountId}_iot_rule
       TopicRulePayload: 
+        AwsIotSqlVersion: '2016-03-23'
+        RuleDisabled: false
         Sql: SELECT * FROM 'smart-dog-collar'
         Actions: 
           - Lambda:
-              FunctionArn: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-processArduinoData
+              FunctionArn: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-testArduinoProcessing
 
   ArduinoProcessedDataFifoQueuePolicy:
     Type: AWS::SQS::QueuePolicy
