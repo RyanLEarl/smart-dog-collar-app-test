@@ -39,6 +39,7 @@ provider:
     - Effect: "Allow"
       Action:
         - "secretsmanager:GetSecretValue"
+        - "sqs:SendMessage"
       Resource:
         - !Sub arn:aws:secretsmanager:${self:provider.region}:${AWS::AccountId}:secret:${self:service}-*
 
