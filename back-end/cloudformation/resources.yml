@@ -33,6 +33,49 @@ Resources:
               - ''
               - - !GetAtt S3Bucket.Arn
                 - '/*'
+  IOTRule: 
+    Type: AWS::IoT::TopicRule
+    Properties: 
+      RuleName: !Sub smart_dog_collar_${self:provider.stage}_${AWS::AccountId}_iot_rule
+      TopicRulePayload: 
+        Sql: SELECT * FROM 'smart-dog-collar'
+        Actions: 
+          - Lambda:
+              FunctionArn: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-processArduinoData
+
+  ArduinoProcessedDataFifoQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    DependsOn: ArduinoProcessedDataFifoQueue
+    Properties: 
+      Queues: 
+        - !Sub 'https://sqs.${self:provider.region}.amazonaws.com/${AWS::AccountId}/${self:service}-${self:provider.stage}-ArduinoProcessedDataQueue.fifo'
+      PolicyDocument: 
+        Statement: 
+          -
+            Action: 
+              - "sqs:*"
+            Effect: "Allow"
+            Resource: !GetAtt ArduinoProcessedDataFifoQueue.Arn
+            Principal: 
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+
+  SQSToServicenowEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    DependsOn: ArduinoProcessedDataFifoQueuePolicy
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt ArduinoProcessedDataFifoQueue.Arn
+      FunctionName: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-testArduinoProcessing
+
+  ArduinoProcessedDataFifoQueue:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      QueueName: !Sub ${self:service}-${self:provider.stage}-ArduinoProcessedDataQueue.fifo
+      FifoQueue: true
+      ContentBasedDeduplication : true
+      VisibilityTimeout: 600
 Outputs:
   WebsiteURL:
     Value: !GetAtt 
@@ -47,3 +90,5 @@ Outputs:
           - S3Bucket
           - DomainName
     Description: Name of S3 bucket to hold website content
+
+  

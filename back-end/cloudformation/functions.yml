@@ -1,3 +1,7 @@
 processArduinoData:
   handler: src/functions/processArduinoData.handler
   timeout: 60
+
+testArduinoProcessing:
+  handler: src/functions/testArduinoProcessing.handler
+  timeout: 60
