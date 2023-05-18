@@ -60,15 +60,6 @@ Resources:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
 
-  SQSToServicenowEventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    DependsOn: ArduinoProcessedDataFifoQueuePolicy
-    Properties:
-      BatchSize: 10
-      Enabled: true
-      EventSourceArn: !GetAtt ArduinoProcessedDataFifoQueue.Arn
-      FunctionName: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-testArduinoProcessing
-
   ArduinoProcessedDataFifoQueue:
     Type: "AWS::SQS::Queue"
     Properties:
