@@ -466,6 +466,7 @@ Resources:
               - codebuild:BatchGetBuilds
               - codebuild:StopBuild
               - codebuild:UpdateProject
+              - iot:ReplaceTopicRule
               - s3:*
               - sns:Publish
               - sns:TagResource
