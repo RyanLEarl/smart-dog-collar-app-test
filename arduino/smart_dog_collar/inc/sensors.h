@@ -49,3 +49,4 @@ public:
     bool setupIMU(tflite::ErrorReporter*);
     bool readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*);
 };
+#endif
