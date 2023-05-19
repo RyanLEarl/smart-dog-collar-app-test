@@ -1,16 +1,10 @@
 #ifndef SENSORS_H
 #define SENSORS_H
-#define BLE_SENSE_BOARD
-// #undef BLE_SENSE_BOARD
 
-#ifdef BLE_SENSE_BOARD
 #include <TensorFlowLite.h>
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 // #include <Arduino_LSM9DS1.h> // Rev 1
 #include <Arduino_BMI270_BMM150.h> // Rev 2
-#else
-#include <Arduino_LSM6DS3.h> // IoT
-#endif
 
 #define DATA_LENGTH 80
 #define ACCELERATION_COUNT 3
@@ -52,13 +46,6 @@ private:
 /* Methods */
 /***********/
 public:
-    #ifdef BLE_SENSE_BOARD
     bool setupIMU(tflite::ErrorReporter*);
     bool readAccelerometerAndGyroscope(tflite::ErrorReporter*, float*);
-    #else
-    bool setupIMU();
-    bool readAccelerometerAndGyroscope(float*);
-    #endif
 };
-
-#endif
