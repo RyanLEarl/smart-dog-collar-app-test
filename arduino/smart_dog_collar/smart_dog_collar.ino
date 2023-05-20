@@ -67,8 +67,6 @@ void setup()
   // Setup logging
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
-
-
   error_reporter->Report("Attempting to setup");
 
   // Setup struct
@@ -268,7 +266,6 @@ void serializeResults(tflite::ErrorReporter*, int)
     String jsonString;
     deserializeJson(doc, jsonString);
     Serial.println(jsonString);
-    // error_reporter->Report(jsonString);
-    // error_reporter->Report(labels[event]);
+
     #endif
 }
