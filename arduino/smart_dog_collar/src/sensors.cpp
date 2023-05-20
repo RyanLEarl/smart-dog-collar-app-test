@@ -71,13 +71,17 @@ bool Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporte
         }
         else
         {
+            #ifdef SMART_DOG_COLLAR_DEBUG
             error_reporter->Report("Failed to read gyroscope data");
+            #endif
             return false;
         }
     }
     else
     {
+        #ifdef SMART_DOG_COLLAR_DEBUG
         error_reporter->Report("No gyroscope data found");
+        #endif
         return false;
     }
 
@@ -110,13 +114,17 @@ bool Sensors::readAccelerometerAndGyroscope(tflite::ErrorReporter *error_reporte
         }
         else
         {
+            #ifdef SMART_DOG_COLLAR_DEBUG
             error_reporter->Report("Failed to read acceleration data");
+            #endif
             return false;
         }
     }
     else
     {
+        #ifdef SMART_DOG_COLLAR_DEBUG
         error_reporter->Report("No accelerometer data found");
+        #endif
         return false;
     }
 
