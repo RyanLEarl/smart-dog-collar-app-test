@@ -10,6 +10,8 @@ Running the Machine Learning
 
 Notes
 1. The current machine learning model is the file "arduino/ml_models/byte_models/dense_nn_experiment_working_v2.cc"
-2. The following files contain "#define SMART_DOG_COLLAR_DEBUG" and "#undef SMART_DOG_COLLAR_DEBUG" If you want the debugging values to be shown, make sure to comment out "#undef SMART_DOG_COLLAR_DEBUG" for the files where you want this change to occur
+2. The following files contains "#define SMART_DOG_COLLAR_DEBUG" and "#undef SMART_DOG_COLLAR_DEBUG". If you want the debugging values to be shown, make sure to comment out "#undef SMART_DOG_COLLAR_DEBUG" for the files where you want this change to occur
     * smart_dog_collar.ino
     * sensors.cpp
+3. The following file contains "#define SHOW_ML_OUTPUT" and "#undef SHOW_ML_OUTPUT". If you want the ML output to be shown, make sure to comment out "#undef SHOW_ML_OUTPUT"
+    * smart_dog_collar.ino
