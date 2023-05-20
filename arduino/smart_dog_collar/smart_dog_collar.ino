@@ -14,7 +14,6 @@
 #include <Arduino_BMI270_BMM150.h> // Rev 2
 #include <ArduinoJson.h>
 #include "./inc/sensors.h"
-#include "./inc/arduino_secrets.h"
 #include "./inc/smart_dog_collar_model_data.h"
 
 #define SENSOR_COUNT 6
