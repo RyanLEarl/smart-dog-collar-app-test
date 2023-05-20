@@ -1,5 +1,5 @@
 #define SMART_DOG_COLLAR_DEBUG
-// #undef SMART_DOG_COLLAR_DEBUG
+#undef SMART_DOG_COLLAR_DEBUG
 #define SHOW_ML_OUTPUT
 // #undef SHOW_ML_OUTPUT
 
@@ -93,11 +93,13 @@ void setup()
     model = tflite::GetModel(sdc_model_data);
     if (model->version() != TFLITE_SCHEMA_VERSION) 
     {
+        #ifdef SMART_DOG_COLLAR_DEBUG
         TF_LITE_REPORT_ERROR(error_reporter,
                             "Model provided is schema version %d not equal "
                             "to supported version %d.",
                             model->version(), TFLITE_SCHEMA_VERSION);
-
+        #endif
+        
         return;
     }
 

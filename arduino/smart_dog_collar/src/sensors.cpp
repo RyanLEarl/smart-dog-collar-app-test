@@ -9,7 +9,9 @@ bool Sensors::setupIMU(tflite::ErrorReporter *error_reporter)
     // Try to start up the IMU
     if (!IMU.begin()) 
     {
+        #ifdef SMART_DOG_COLLAR_DEBUG
         error_reporter->Report("Failed to initialize IMU");
+        #endif
         return 0;
     }
 
