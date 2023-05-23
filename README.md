@@ -61,3 +61,7 @@ You can deploy the serverless project by merging changes into your CI/CD targete
 
 At times during development you may wish to deploy changes to just one lambda. To do this run the following:<br>
 `sls deploy function --aws-profile <REPLACE_AWS_PROFILE> --stage <REPLACE_STAGE> -f <REPLACE_FUNCTION_NAME>`<br>
+
+## AWS IoT Setup and the ESP32
+
+Refer to this link https://aws.amazon.com/blogs/compute/building-an-aws-iot-core-device-using-aws-serverless-and-an-esp32/ for detailed instructions.
