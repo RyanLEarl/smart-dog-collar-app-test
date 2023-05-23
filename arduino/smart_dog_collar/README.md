@@ -1,5 +1,11 @@
 # Smart Dog Collar Arduino Code
 
+## Materials
+
+1. Arduino Nano 33 BLE Sense Rev 2
+2. USB-A to micro-USB data cable
+3. Device compatible with the Arduino IDE
+
 ## Running the Machine Learning
 
 1. At minimum clone the "arduino" directory which is the parent of this file's parent (smart_dog_collar)
@@ -7,8 +13,9 @@
 3. Open up the smart_dog_collar.ino file in your Arduino IDE
 4. Connect the Arduino Nano 33 BLE Sense Rev 2 to your device
 5. Double click the white reset button to put it in bootloader mode
-6. Click on "Upload" to upload code to the arduino (Might take a few minutes)
-7. If any errors pop up you might need to install libraries using the Library Manager. The libraries needed are found under arduino/lib
+6. If the IDE does not detect your board (Arduino Nano 33 BLE), you might have to manually add the board.
+7. Click on "Upload" to upload code to the arduino (Might take a few minutes)
+8. If any errors pop up you might need to install libraries using the Library Manager. The libraries needed are found under arduino/lib
     *  arduino/lib/Arduino_TensorFlowLite should be the only one that needs to be manually installed
 
 ## Notes
@@ -19,3 +26,4 @@
     * sensors.cpp
 3. The following file contains "#define SHOW_ML_OUTPUT" and "#undef SHOW_ML_OUTPUT". If you want the ML output to be shown, make sure to comment out "#undef SHOW_ML_OUTPUT"
     * smart_dog_collar.ino
+4. Following these instructions only include machine learning and sending data on serial 1. In order to use it with wifi, the instructions in the parent directory must be followed along with programming the ESP 32
