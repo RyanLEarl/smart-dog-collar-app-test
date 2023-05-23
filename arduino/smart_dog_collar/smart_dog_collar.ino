@@ -63,6 +63,7 @@ void serializeResults(tflite::ErrorReporter*, int);
 void setup() 
 {
     // Setup Serial
+    Serial1.begin(9600);
     tflite::InitializeTarget();
 
     // Setup logging
@@ -158,7 +159,7 @@ void setup()
 void loop() 
 {
     // Add a timer
-    const unsigned long timer = 1000UL / READS_PER_SECOND; // 17 reads per second
+    const unsigned long timer = 10000UL / READS_PER_SECOND; // 17 reads per second
     static unsigned long lastSampleTime = 0 - timer;
     unsigned long now = millis();
 
@@ -277,12 +278,12 @@ void serializeResults(tflite::ErrorReporter*, int)
     }
 
     // Turn Results into Json
-    DynamicJsonDocument doc(1024);
+    DynamicJsonDocument doc(256);
     doc["type"] = "request";
     doc["status"] = labels[event];
 
     // Serialize Json
-    serializeJson(doc, Serial);
+    serializeJson(doc, Serial1);
 
     #ifdef SHOW_ML_OUTPUT
     // Check what was the result of the model
