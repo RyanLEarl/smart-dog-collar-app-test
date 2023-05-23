@@ -64,11 +64,21 @@ Resources:
 
   ArduinoProcessedDataFifoQueue:
     Type: "AWS::SQS::Queue"
+    DependsOn: ArduinoProcessedDataDeadLetterQueue
     Properties:
       QueueName: !Sub ${self:service}-${self:provider.stage}-ArduinoProcessedDataQueue.fifo
       FifoQueue: true
       ContentBasedDeduplication : true
       VisibilityTimeout: 600
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ArduinoProcessedDataDeadLetterQueue.Arn
+        maxReceiveCount: 5
+
+  ArduinoProcessedDataDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      FifoQueue: true
+      QueueName: !Sub ${self:service}-${self:provider.stage}-ArduinoProcessedDataDeadLetterQueue.fifo
 Outputs:
   WebsiteURL:
     Value: !GetAtt 
