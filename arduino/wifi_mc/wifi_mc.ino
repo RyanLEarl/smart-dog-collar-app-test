@@ -2,14 +2,20 @@
 #include <WiFiClientSecure.h>
 #include <MQTTClient.h>
 #include <ArduinoJson.h>
+#include <HardwareSerial.h>
 #include "WiFi.h"
 
 // The MQTT topics that this device should publish/subscribe
-#define AWS_IOT_PUBLISH_TOPIC   "esp32/pub"
-#define AWS_IOT_SUBSCRIBE_TOPIC "esp32/sub"
+#define AWS_IOT_PUBLISH_TOPIC   "smart-dog-collar"
+#define AWS_IOT_SUBSCRIBE_TOPIC "smart-dog-collar"
+
+HardwareSerial SerialPort(2); // UART2
 
 WiFiClientSecure net = WiFiClientSecure();
 MQTTClient client = MQTTClient(256);
+
+StaticJsonDocument<256> in_doc;
+StaticJsonDocument<256> out_doc;
 
 /**
  * Connects to local WiFi network as identified in secrets.h, and then
@@ -22,6 +28,7 @@ void connectAWS()
 
   Serial.println("Connecting to Wi-Fi");
 
+  // Connect to WiFi network
   while (WiFi.status() != WL_CONNECTED){
     delay(500);
     Serial.print(".");
@@ -38,7 +45,7 @@ void connectAWS()
   // Create a message handler
   client.onMessage(messageHandler);
 
-  Serial.print("Connecting to AWS IOT");
+  Serial.println("Connecting to AWS IOT");
 
   while (!client.connect(THINGNAME)) {
     Serial.print(".");
@@ -62,50 +69,71 @@ void connectAWS()
  */
 void publishMessage()
 {
-  StaticJsonDocument<256> doc;
-  /*doc["time"] = millis();
-  doc["sensor_a0"] = analogRead(0);
-  char jsonBuffer[512];*/
-
-  boolean message_ready = false;
   String message = "";
-  while (!message_ready) { // blocking but that's ok
-    if (Serial.available()) {
-      message = Serial.readString();
-      message_ready = true;
-    }
+  if (SerialPort.available()) {
+    message = SerialPort.readString();
+  } else {
+	  return;
   }
+  
+  in_doc.clear();
+  out_doc.clear();
+  
   // Attempt to deserialize the JSON-formatted message to verify that it's valid JSON
-  DeserializationError error = deserializeJson(doc, message);
+  DeserializationError error = deserializeJson(in_doc, message);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.c_str());
     return;
   } else {
+    out_doc["type"] = in_doc["type"];
+    //out_doc["timestamp"] = millis();
+    out_doc["status"] = in_doc["status"];
+
+    // in_doc["type"] = "type";
+    // in_doc["status"] = "test2";
+    // out_doc["type"] = in_doc["type"];
+    // out_doc["status"] = in_doc["status"];
+    
+    String payload;
+    serializeJson(out_doc, payload);
+    // Serial.println("Sending:");
+    // Serial.println(payload);
+
     // forward the message to AWS IoT Core
-    client.publish(AWS_IOT_PUBLISH_TOPIC, message);
+    client.publish(AWS_IOT_PUBLISH_TOPIC, payload.c_str());
+    delay(1000);
   }
 }
 
 /**
  * Handles messages sent by AWS IoT
- * This function is not normally used, so it is left unimplemeted.
+ * This function is not currently used, so it is left unimplemeted.
  */
 void messageHandler(String &topic, String &payload) {
   Serial.println("incoming: " + topic + " - " + payload);
 
 //  StaticJsonDocument<200> doc;
-//  deserializeJson(doc, payload);
+//  deserializeJson(doc, message);
 //  const char* message = doc["message"];
 }
 
+/**
+ * Starts by connecting to Aws through the local WiFi network.
+ */
 void setup() {
   Serial.begin(9600);
+  SerialPort.begin(9600, SERIAL_8N1, 16, 17); // RX = 16, TX = 17
   connectAWS();
 }
 
+/**
+ * Continuously reads incoming messages from the Arduino on the serial port.
+ * Forwards these messages to AWS.
+ */
 void loop() {
   publishMessage();
   client.loop();
-  delay(1000);
+  delay(10);
+  //delay(1000);
 }
