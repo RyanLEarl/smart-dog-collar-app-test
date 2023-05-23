@@ -66,3 +66,7 @@ At times during development you may wish to deploy changes to just one lambda. T
 ## AWS IoT Setup and the ESP32
 
 Refer to this link https://aws.amazon.com/blogs/compute/building-an-aws-iot-core-device-using-aws-serverless-and-an-esp32/ for detailed instructions.
+
+## SmartCollarApp Repository
+
+https://github.com/hiroto-kazama/SmartCollarApp0504/tree/master
