@@ -40,7 +40,7 @@ Note: Each service folder has its own README file for specific setup directions 
 2. From the root folder, run `npm install` to install your linting packages.
 3. Navigate to the back-end folder and follow the instructions.
 4. Navigate to the buildspecs folder and follow the instructions.
-5. Create an S3 bucket in your aws instance with the name `codepipeline-<YOUR_REGION_HERE>-<YOUR_ACCOUNT_ID_HERE>`
+5. Create an S3 bucket in your aws instance with the name codepipeline-<YOUR_REGION_HERE>-<YOUR_ACCOUNT_ID_HERE>
 6. Commit changes to Github.
 7. Navigate to the pipeline folder and follow the instructions.
 8. Verify your CICD has completed successfully from the AWS Cloudformation console.  Once it has completed building, your project stack will automatically start building.  
