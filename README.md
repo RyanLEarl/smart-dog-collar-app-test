@@ -69,4 +69,4 @@ Refer to this link https://aws.amazon.com/blogs/compute/building-an-aws-iot-core
 
 ## SmartCollarApp Repository
 
-https://github.com/hiroto-kazama/SmartCollarApp0504/tree/master
+https://github.com/hiroto-kazama/SmartCollarApp0524/tree/master
